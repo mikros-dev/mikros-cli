@@ -1,0 +1,15 @@
+package main
+
+import (
+    "context"
+)
+{{if .HasOnStart}}
+func (s *service) OnStart(ctx context.Context) error {
+    return nil
+}
+{{end}}
+{{if .HasOnFinish}}
+func (s *service) OnFinish(ctx context.Context) error {
+    return nil
+}
+{{end}}

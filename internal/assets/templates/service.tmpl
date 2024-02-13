@@ -1,0 +1,41 @@
+package main
+
+import (
+{{- range .GetTemplateImports templateName}}
+    {{.Alias}} "{{.Path}}"
+{{- end}}
+)
+
+type service struct {
+    *mikros.Service
+}
+
+{{- if or .IsGrpcService .IsHttpService}}{{$module := toSnake .ServiceName}}
+{{range .GrpcMethods}}
+func (s *service) {{.Name}}(ctx context.Context, req *{{$module}}pb.{{.InputName}}) (*{{$module}}pb.{{.OutputName}}, error) {
+    if err := req.Validate(); err != nil {
+        return nil, s.Errors().InvalidArgument(ctx, err)
+    }
+
+    return &{{$module}}pb.{{.OutputName}}{}, nil
+}
+{{end}}
+{{- end}}
+{{- if .IsNativeService}}
+func (s *service) Start(ctx context.Context) error {
+	return nil
+}
+
+func (s *service) Stop(ctx context.Context) error {
+	return nil
+}
+{{- end}}
+{{- if .IsScriptService}}
+func (s *service) Run(ctx context.Context) error {
+	return nil
+}
+
+func (s *service) Cleanup(ctx context.Context) error {
+	return nil
+}
+{{- end}}

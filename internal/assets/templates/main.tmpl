@@ -1,0 +1,15 @@
+package main
+
+import (
+{{- range .GetTemplateImports templateName}}
+    {{.Alias}} "{{.Path}}"
+{{- end}}
+)
+
+func main() {
+    svc := mikros.NewService(&options.NewServiceOptions{
+        {{.NewServiceArgs}}
+    }){{if .HasFeaturesExtensions}}.WithExternalFeatures(framework_extensions.Features()){{end}}{{if .HasServicesExtensions}}.WithExternalServices(framework_extensions.Services()){{end}}
+
+    svc.Start(&service{})
+}
