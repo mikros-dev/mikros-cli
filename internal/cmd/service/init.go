@@ -461,21 +461,22 @@ func runFeatureSurvey(name string, options *InitOptions) (interface{}, error) {
 		return nil, nil
 	}
 
+	var response map[string]interface{}
+
 	if s := api.GetSurvey(); s != nil {
-		response, err := handleSurvey(name, s)
+		res, err := handleSurvey(name, s)
 		if err != nil {
 			return nil, err
 		}
-
-		defs, err := api.Answers(response)
-		if err != nil {
-			return nil, err
-		}
-
-		return defs, nil
+		response = res
 	}
 
-	return nil, nil
+	defs, err := api.Answers(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return defs, nil
 }
 
 func generateTemplates(options *InitOptions, answers *initSurveyAnswers, featuresDefinitions, serviceDefinitions map[string]interface{}) error {
@@ -561,7 +562,6 @@ func generateSources(options *InitOptions, answers *initSurveyAnswers) error {
 		return err
 	}
 
-	fmt.Println("run templates", answers.TemplateNames())
 	if err := runTemplates(answers.TemplateNames(), context); err != nil {
 		return err
 	}

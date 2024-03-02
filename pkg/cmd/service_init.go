@@ -2,36 +2,32 @@ package cmd
 
 import (
 	"fmt"
+	"slices"
 
+	"github.com/somatech1/mikros/components/plugin"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/somatech1/mikros-cli/internal/cmd/service"
 )
 
+type serviceInitCmdOptions struct {
+	DisablePersistentFlags bool
+	Features               *plugin.FeatureSet
+	Services               *plugin.ServiceSet
+}
+
 var (
 	serviceInitCmd = &cobra.Command{
 		Use:   "init",
 		Short: "Initializes a new service.",
-		Long: `init helps initialize a new service folder by creating
-some of its settings file and its go.mod.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			options := &service.InitOptions{
-				Path:          viper.GetString("init-path"),
-				ProtoFilename: viper.GetString("init-proto"),
-			}
-
-			if err := service.Init(options); err != nil {
-				fmt.Println(err.Error())
-				return
-			}
-		},
+		Long: `init helps creating a new service template by creating
+some of its source files and its go.mod.`,
 	}
 )
 
-func serviceInitCmdInit() {
-	serviceCmd.AddCommand(serviceInitCmd)
-
+func serviceInitCmdInit(options *serviceInitCmdOptions) {
 	// path option
 	serviceInitCmd.Flags().String("path", "", "Sets the output path name (default: cwd).")
 	_ = viper.BindPFlag("init-path", serviceInitCmd.Flags().Lookup("path"))
@@ -39,4 +35,49 @@ func serviceInitCmdInit() {
 	// proto file option
 	serviceInitCmd.Flags().String("proto", "", "Uses an _api.proto file as source for the service API.")
 	_ = viper.BindPFlag("init-proto", serviceInitCmd.Flags().Lookup("proto"))
+
+	serviceInitCmd.Run = func(cmd *cobra.Command, args []string) {
+		initOptions := &service.InitOptions{
+			Path:          viper.GetString("init-path"),
+			ProtoFilename: viper.GetString("init-proto"),
+		}
+
+		if options != nil {
+			initOptions.Features = options.Features
+			initOptions.Services = options.Services
+		}
+
+		if err := service.Init(initOptions); err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		fmt.Printf("\n✅ Service successfully created\n")
+	}
+
+	if options.DisablePersistentFlags {
+		serviceInitCmd.SetHelpFunc(func(command *cobra.Command, i []string) {
+			disableServiceGlobalFlags()
+			command.Parent().HelpFunc()(command, i)
+		})
+	}
+
+	serviceCmd.AddCommand(serviceInitCmd)
+}
+
+func disableServiceGlobalFlags() {
+	flagsToHide := []string{}
+	serviceCmd.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
+		flagsToHide = append(flagsToHide, flag.Name)
+	})
+
+	markGlobalFlagsHidden(serviceCmd, flagsToHide...)
+}
+
+func markGlobalFlagsHidden(command *cobra.Command, flags ...string) {
+	command.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
+		if slices.Contains(flags, flag.Name) {
+			flag.Hidden = true
+		}
+	})
 }

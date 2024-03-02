@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -101,8 +102,13 @@ func AppendFeature(path, name string, featureDefs interface{}) error {
 		}
 	}
 	if ok {
+		newFeatureDefs, err := featureDefsToMap(featureDefs)
+		if err != nil {
+			return err
+		}
+
 		features := features.(map[string]interface{})
-		features[name] = featureDefs
+		features[name] = newFeatureDefs
 		defs["features"] = features
 
 		if err := appendFeatureDefinitions(filename, defs); err != nil {
@@ -111,6 +117,15 @@ func AppendFeature(path, name string, featureDefs interface{}) error {
 	}
 
 	return nil
+}
+
+func loadCurrentFile(path string) (map[string]interface{}, error) {
+	var data map[string]interface{}
+	if _, err := toml.DecodeFile(path, &data); err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func writeFirstFeatureDefinitions(filename, name string, defs interface{}) error {
@@ -133,7 +148,23 @@ func writeFirstFeatureDefinitions(filename, name string, defs interface{}) error
 	return nil
 }
 
-func appendFeatureDefinitions(filename string, defs map[string]interface{}) error {
+func featureDefsToMap(featureDefs interface{}) (map[string]interface{}, error) {
+	var b bytes.Buffer
+
+	en := toml.NewEncoder(&b)
+	if err := en.Encode(featureDefs); err != nil {
+		return nil, err
+	}
+
+	defs := make(map[string]interface{})
+	if err := toml.Unmarshal(b.Bytes(), &defs); err != nil {
+		return nil, err
+	}
+
+	return defs, nil
+}
+
+func appendFeatureDefinitions(filename string, defs interface{}) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -146,13 +177,4 @@ func appendFeatureDefinitions(filename string, defs map[string]interface{}) erro
 	}
 
 	return nil
-}
-
-func loadCurrentFile(path string) (map[string]interface{}, error) {
-	var data map[string]interface{}
-	if _, err := toml.DecodeFile(path, &data); err != nil {
-		return nil, err
-	}
-
-	return data, nil
 }
