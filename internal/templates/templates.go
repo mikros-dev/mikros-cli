@@ -11,6 +11,8 @@ import (
 	"text/template"
 
 	"github.com/iancoleman/strcase"
+
+	"github.com/somatech1/mikros-cli/pkg/templates"
 )
 
 type Templates struct {
@@ -19,7 +21,7 @@ type Templates struct {
 
 type TemplateInfo struct {
 	tpl  *template.Template
-	name TemplateName
+	name templates.TemplateFile
 }
 
 type GeneratedTemplate struct {
@@ -36,15 +38,9 @@ func (g *GeneratedTemplate) Content() []byte {
 }
 
 type LoadOptions struct {
-	TemplateNames []TemplateName
+	TemplateNames []templates.TemplateFile
 	Api           map[string]interface{}
 	Files         embed.FS
-}
-
-type TemplateName struct {
-	Name      string
-	Output    string
-	Extension string
 }
 
 func Load(options *LoadOptions) (*Templates, error) {
@@ -53,7 +49,7 @@ func Load(options *LoadOptions) (*Templates, error) {
 		return nil, err
 	}
 
-	var templates []*TemplateInfo
+	var tpls []*TemplateInfo
 	for _, file := range files {
 		data, err := options.Files.ReadFile(file.Name())
 		if err != nil {
@@ -75,7 +71,7 @@ func Load(options *LoadOptions) (*Templates, error) {
 			helperApi[call] = function
 		}
 
-		idx := slices.IndexFunc(options.TemplateNames, func(t TemplateName) bool {
+		idx := slices.IndexFunc(options.TemplateNames, func(t templates.TemplateFile) bool {
 			return t.Name == name
 		})
 		if idx == -1 {
@@ -88,14 +84,14 @@ func Load(options *LoadOptions) (*Templates, error) {
 			return nil, err
 		}
 
-		templates = append(templates, &TemplateInfo{
+		tpls = append(tpls, &TemplateInfo{
 			name: options.TemplateNames[idx],
 			tpl:  tpl,
 		})
 	}
 
 	return &Templates{
-		templates: templates,
+		templates: tpls,
 	}, nil
 }
 
@@ -130,7 +126,7 @@ func (t *Templates) Execute(ctx interface{}) ([]*GeneratedTemplate, error) {
 	return gen, nil
 }
 
-func (t *Templates) newGenerated(data *bytes.Buffer, name TemplateName) *GeneratedTemplate {
+func (t *Templates) newGenerated(data *bytes.Buffer, name templates.TemplateFile) *GeneratedTemplate {
 	filename := name.Name
 	if name.Output != "" {
 		filename = name.Output

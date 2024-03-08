@@ -1,6 +1,7 @@
 package service
 
 import (
+	"embed"
 	"errors"
 	"fmt"
 	"os"
@@ -15,19 +16,29 @@ import (
 	"github.com/somatech1/mikros/components/definition"
 	"github.com/somatech1/mikros/components/plugin"
 
+	assets "github.com/somatech1/mikros-cli/internal/assets/templates"
 	"github.com/somatech1/mikros-cli/internal/definitions"
 	"github.com/somatech1/mikros-cli/internal/golang"
-	"github.com/somatech1/mikros-cli/internal/path"
 	"github.com/somatech1/mikros-cli/internal/protobuf"
+	"github.com/somatech1/mikros-cli/internal/templates"
+	"github.com/somatech1/mikros-cli/pkg/path"
 	msurvey "github.com/somatech1/mikros-cli/pkg/survey"
+	mtemplates "github.com/somatech1/mikros-cli/pkg/templates"
 )
 
 type InitOptions struct {
-	Path          string
-	ProtoFilename string
-	FeatureNames  []string
-	Features      *plugin.FeatureSet
-	Services      *plugin.ServiceSet
+	Path              string
+	ProtoFilename     string
+	FeatureNames      []string
+	Features          *plugin.FeatureSet
+	Services          *plugin.ServiceSet
+	ExternalTemplates *TemplateFileOptions
+}
+
+type TemplateFileOptions struct {
+	Files     embed.FS
+	Templates []mtemplates.TemplateFile
+	Api       map[string]interface{}
 }
 
 // Init initializes a new service locally.
@@ -520,7 +531,7 @@ func generateTemplates(options *InitOptions, answers *initSurveyAnswers, feature
 		return err
 	}
 
-	// creates go source templates
+	// creates go source mtemplates
 	if err := generateSources(options, answers); err != nil {
 		return err
 	}
@@ -562,7 +573,7 @@ func generateSources(options *InitOptions, answers *initSurveyAnswers) error {
 		return err
 	}
 
-	if err := runTemplates(answers.TemplateNames(), context); err != nil {
+	if err := createServiceTemplates(options, answers.TemplateNames(), context); err != nil {
 		return err
 	}
 
@@ -603,6 +614,7 @@ func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers) (
 
 func generateNewServiceArgs(answers *initSurveyAnswers) string {
 	svcSnake := strcase.ToSnake(answers.Name)
+
 	switch answers.Type {
 	case definition.ServiceType_gRPC.String():
 		return fmt.Sprintf(`Service: map[string]options.ServiceOptions{
@@ -656,4 +668,50 @@ func generateImports(answers *initSurveyAnswers) map[string][]ImportContext {
 	}
 
 	return imports
+}
+
+func createServiceTemplates(options *InitOptions, filenames []mtemplates.TemplateFile, context interface{}) error {
+	if err := runTemplates(assets.Files, filenames, context, nil); err != nil {
+		return err
+	}
+
+	if options != nil && options.ExternalTemplates != nil {
+		if err := runTemplates(options.ExternalTemplates.Files, options.ExternalTemplates.Templates, context, options.ExternalTemplates.Api); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func runTemplates(files embed.FS, filenames []mtemplates.TemplateFile, context interface{}, api map[string]interface{}) error {
+	tpls, err := templates.Load(&templates.LoadOptions{
+		TemplateNames: filenames,
+		Files:         files,
+		Api:           api,
+	})
+	if err != nil {
+		return err
+	}
+
+	generated, err := tpls.Execute(context)
+	if err != nil {
+		return err
+	}
+
+	for _, gen := range generated {
+		file, err := os.Create(gen.Filename())
+		if err != nil {
+			return err
+		}
+
+		if _, err := file.Write(gen.Content()); err != nil {
+			_ = file.Close()
+			return err
+		}
+
+		_ = file.Close()
+	}
+
+	return nil
 }

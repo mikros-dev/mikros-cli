@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"embed"
 	"fmt"
 	"slices"
 
@@ -10,12 +11,20 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/somatech1/mikros-cli/internal/cmd/service"
+	"github.com/somatech1/mikros-cli/pkg/templates"
 )
 
 type serviceInitCmdOptions struct {
 	DisablePersistentFlags bool
 	Features               *plugin.FeatureSet
 	Services               *plugin.ServiceSet
+	AdditionalTemplates    *ServiceTemplateFile
+}
+
+type ServiceTemplateFile struct {
+	Files     embed.FS
+	Templates []templates.TemplateFile
+	Api       map[string]interface{}
 }
 
 var (
@@ -45,6 +54,14 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 		if options != nil {
 			initOptions.Features = options.Features
 			initOptions.Services = options.Services
+
+			if options.AdditionalTemplates != nil {
+				initOptions.ExternalTemplates = &service.TemplateFileOptions{
+					Files:     options.AdditionalTemplates.Files,
+					Templates: options.AdditionalTemplates.Templates,
+					Api:       options.AdditionalTemplates.Api,
+				}
+			}
 		}
 
 		if err := service.Init(initOptions); err != nil {

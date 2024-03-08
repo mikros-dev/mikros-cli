@@ -34,6 +34,7 @@ type ServiceCmdOptions struct {
 	SubCommands                  []*cobra.Command
 	PersistentFlags              []*Flag
 	Flags                        []*Flag
+	AdditionalTemplates          *ServiceTemplateFile
 }
 
 type Flag struct {
@@ -67,6 +68,7 @@ func ServiceCommand(options *ServiceCmdOptions) *cobra.Command {
 		DisablePersistentFlags: options.DisablePersistentFlagsOnInit,
 		Features:               options.Features,
 		Services:               options.Services,
+		AdditionalTemplates:    options.AdditionalTemplates,
 	})
 
 	serviceCmd.AddCommand(options.SubCommands...)

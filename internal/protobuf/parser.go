@@ -25,7 +25,9 @@ func Parse(filename string) (*Proto, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer func(reader *os.File) {
+		_ = reader.Close()
+	}(reader)
 
 	parser := protofile.NewParser(reader)
 	definitions, err := parser.Parse()

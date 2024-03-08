@@ -1,13 +1,9 @@
 package service
 
 import (
-	"os"
-
 	"github.com/somatech1/mikros/components/definition"
 
-	assets "github.com/somatech1/mikros-cli/internal/assets/templates"
 	"github.com/somatech1/mikros-cli/internal/protobuf"
-	"github.com/somatech1/mikros-cli/internal/templates"
 )
 
 type TemplateContext struct {
@@ -70,35 +66,4 @@ func (t TemplateContext) HasOnStart() bool {
 
 func (t TemplateContext) HasOnFinish() bool {
 	return t.onFinishLifecycle
-}
-
-func runTemplates(filenames []templates.TemplateName, context interface{}) error {
-	tpls, err := templates.Load(&templates.LoadOptions{
-		TemplateNames: filenames,
-		Files:         assets.Files,
-	})
-	if err != nil {
-		return err
-	}
-
-	generated, err := tpls.Execute(context)
-	if err != nil {
-		return err
-	}
-
-	for _, gen := range generated {
-		file, err := os.Create(gen.Filename())
-		if err != nil {
-			return err
-		}
-
-		if _, err := file.Write(gen.Content()); err != nil {
-			_ = file.Close()
-			return err
-		}
-
-		_ = file.Close()
-	}
-
-	return nil
 }

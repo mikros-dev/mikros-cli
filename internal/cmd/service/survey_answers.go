@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/somatech1/mikros-cli/internal/templates"
+	"github.com/somatech1/mikros-cli/pkg/templates"
 )
 
 type initSurveyAnswers struct {
@@ -14,8 +14,8 @@ type initSurveyAnswers struct {
 	Lifecycle []string
 }
 
-func (i initSurveyAnswers) TemplateNames() []templates.TemplateName {
-	names := []templates.TemplateName{
+func (i initSurveyAnswers) TemplateNames() []templates.TemplateFile {
+	names := []templates.TemplateFile{
 		{
 			Name:      "main",
 			Extension: "go",
@@ -27,7 +27,7 @@ func (i initSurveyAnswers) TemplateNames() []templates.TemplateName {
 	}
 
 	if len(i.Lifecycle) > 0 {
-		names = append(names, templates.TemplateName{
+		names = append(names, templates.TemplateFile{
 			Name:      "lifecycle",
 			Extension: "go",
 		})
