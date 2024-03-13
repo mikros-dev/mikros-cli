@@ -10,8 +10,9 @@ require (
 	github.com/emicklei/proto v1.13.2
 	github.com/go-playground/validator/v10 v10.17.0
 	github.com/iancoleman/strcase v0.3.0
-	github.com/somatech1/mikros v0.1.1
+	github.com/somatech1/mikros v0.2.0
 	github.com/spf13/cobra v1.8.0
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
 )
 
@@ -44,7 +45,6 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

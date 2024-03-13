@@ -14,6 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/iancoleman/strcase"
 	"github.com/somatech1/mikros/components/definition"
+	moptions "github.com/somatech1/mikros/components/options"
 	"github.com/somatech1/mikros/components/plugin"
 
 	assets "github.com/somatech1/mikros-cli/internal/assets/templates"
@@ -177,7 +178,7 @@ func baseQuestions(options *InitOptions) []*survey.Question {
 		for f, next := iter.Next(); next; f, next = iter.Next() {
 			if api, ok := f.(msurvey.CLIFeature); ok {
 				if api.IsCLISupported() {
-					featureNames = append(featureNames, f.Name())
+					featureNames = append(featureNames, getFeatureUIName(f))
 				}
 			}
 		}
@@ -194,6 +195,14 @@ func baseQuestions(options *InitOptions) []*survey.Question {
 	}
 
 	return questions
+}
+
+func getFeatureUIName(feature plugin.Feature) string {
+	if api, ok := feature.(msurvey.FeatureSurveyUI); ok {
+		return api.UIName()
+	}
+
+	return feature.Name()
 }
 
 // runServiceAPISurvey executes the survey that a service may have implemented.
@@ -464,7 +473,12 @@ func sanitizeResponse(response map[string]interface{}) map[string]interface{} {
 func runFeatureSurvey(name string, options *InitOptions) (interface{}, error) {
 	f, err := options.Features.Feature(name)
 	if err != nil {
-		return nil, err
+		// Search again using mikros feature prefix. Maybe it is an implementation
+		// of a mikros feature.
+		f, err = options.Features.Feature(moptions.FeatureNamePrefix + name)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	api, ok := f.(msurvey.FeatureSurvey)
