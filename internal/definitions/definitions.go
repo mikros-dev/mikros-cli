@@ -95,27 +95,26 @@ func AppendFeature(path, name string, featureDefs interface{}) error {
 		return err
 	}
 
+	newFeatureDefs, err := featureDefsToMap(featureDefs)
+	if err != nil {
+		return err
+	}
+
 	features, ok := defs["features"]
 	if !ok {
-		if err := writeFirstFeatureDefinitions(filename, name, featureDefs); err != nil {
-			return err
+		defs["features"] = map[string]interface{}{
+			name: newFeatureDefs,
 		}
 	}
 	if ok {
-		newFeatureDefs, err := featureDefsToMap(featureDefs)
-		if err != nil {
-			return err
-		}
-
 		features := features.(map[string]interface{})
 		features[name] = newFeatureDefs
 		defs["features"] = features
-
-		if err := appendFeatureDefinitions(filename, defs); err != nil {
-			return err
-		}
 	}
 
+	if err := appendFeatureDefinitions(filename, defs); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -126,26 +125,6 @@ func loadCurrentFile(path string) (map[string]interface{}, error) {
 	}
 
 	return data, nil
-}
-
-func writeFirstFeatureDefinitions(filename, name string, defs interface{}) error {
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = file.Close() }()
-
-	line := fmt.Sprintf("\n[features]\n[features.%v]\n", name)
-	if _, err := file.WriteString(line); err != nil {
-		return err
-	}
-
-	en := toml.NewEncoder(file)
-	if err := en.Encode(defs); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func featureDefsToMap(featureDefs interface{}) (map[string]interface{}, error) {

@@ -21,6 +21,12 @@ type FeatureSurvey interface {
 	Answers(answers map[string]interface{}) (interface{}, error)
 }
 
+// FeatureSurveyUI when implemented by a mikros feature can override some of
+// its information to be used by the mikros-cli UI.
+type FeatureSurveyUI interface {
+	UIName() string
+}
+
 // Survey is a structure that a client uses to tell mikros-cli how to present
 // its survey for the user to answer questions.
 type Survey struct {
