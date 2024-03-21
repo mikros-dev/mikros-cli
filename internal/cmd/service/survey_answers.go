@@ -12,9 +12,12 @@ type initSurveyAnswers struct {
 	Product   string
 	Features  []string
 	Lifecycle []string
+
+	featureDefinitions map[string]*surveyAnswersDefinitions
+	serviceDefinitions *surveyAnswersDefinitions
 }
 
-func (i initSurveyAnswers) TemplateNames() []templates.TemplateFile {
+func (i *initSurveyAnswers) TemplateNames() []templates.TemplateFile {
 	names := []templates.TemplateFile{
 		{
 			Name:      "main",
@@ -34,4 +37,43 @@ func (i initSurveyAnswers) TemplateNames() []templates.TemplateFile {
 	}
 
 	return names
+}
+
+func (i *initSurveyAnswers) AddFeatureDefinitions(name string, answers interface{}, save bool) {
+	if i.featureDefinitions == nil {
+		i.featureDefinitions = make(map[string]*surveyAnswersDefinitions)
+	}
+
+	i.featureDefinitions[name] = &surveyAnswersDefinitions{
+		save:        save,
+		definitions: answers,
+	}
+}
+
+func (i *initSurveyAnswers) SetServiceDefinitions(answers interface{}, save bool) {
+	i.serviceDefinitions = &surveyAnswersDefinitions{
+		save:        save,
+		definitions: answers,
+	}
+}
+
+func (i *initSurveyAnswers) ServiceDefinitions() *surveyAnswersDefinitions {
+	return i.serviceDefinitions
+}
+
+func (i *initSurveyAnswers) FeatureDefinitions() map[string]*surveyAnswersDefinitions {
+	return i.featureDefinitions
+}
+
+type surveyAnswersDefinitions struct {
+	save        bool
+	definitions interface{}
+}
+
+func (s *surveyAnswersDefinitions) ShouldBeSaved() bool {
+	return s.save
+}
+
+func (s *surveyAnswersDefinitions) Definitions() interface{} {
+	return s.definitions
 }

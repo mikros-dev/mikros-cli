@@ -15,6 +15,13 @@ import (
 	"github.com/somatech1/mikros-cli/pkg/templates"
 )
 
+var defaultApi = template.FuncMap{
+	"toCamel":      strcase.ToCamel,
+	"toSnake":      strcase.ToSnake,
+	"toUpperSnake": strcase.ToScreamingSnake,
+	"basename":     path.Base,
+}
+
 type Templates struct {
 	templates []*TemplateInfo
 }
@@ -56,17 +63,14 @@ func Load(options *LoadOptions) (*Templates, error) {
 			return nil, err
 		}
 
-		name := filenameWithoutExtension(file.Name())
-		var helperApi = template.FuncMap{
-			"toCamel":      strcase.ToCamel,
-			"toSnake":      strcase.ToSnake,
-			"toUpperSnake": strcase.ToScreamingSnake,
-			"basename":     path.Base,
-			"templateName": func() string {
-				return name
-			},
-		}
+		var (
+			name      = filenameWithoutExtension(file.Name())
+			helperApi = defaultApi
+		)
 
+		helperApi["templateName"] = func() string {
+			return name
+		}
 		for call, function := range options.Api {
 			helperApi[call] = function
 		}

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"embed"
 	"fmt"
 	"slices"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/somatech1/mikros-cli/internal/cmd/service"
-	"github.com/somatech1/mikros-cli/pkg/templates"
 )
 
 type serviceInitCmdOptions struct {
@@ -19,12 +17,6 @@ type serviceInitCmdOptions struct {
 	Features               *plugin.FeatureSet
 	Services               *plugin.ServiceSet
 	AdditionalTemplates    *ServiceTemplateFile
-}
-
-type ServiceTemplateFile struct {
-	Files     embed.FS
-	Templates []templates.TemplateFile
-	Api       map[string]interface{}
 }
 
 var (
@@ -57,9 +49,12 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 
 			if options.AdditionalTemplates != nil {
 				initOptions.ExternalTemplates = &service.TemplateFileOptions{
-					Files:     options.AdditionalTemplates.Files,
-					Templates: options.AdditionalTemplates.Templates,
-					Api:       options.AdditionalTemplates.Api,
+					Files:                   options.AdditionalTemplates.Files,
+					Templates:               options.AdditionalTemplates.Templates,
+					Api:                     options.AdditionalTemplates.Api,
+					NewServiceArgs:          options.AdditionalTemplates.NewServiceArgs,
+					WithExternalFeaturesArg: options.AdditionalTemplates.WithExternalFeaturesArg,
+					WithExternalServicesArg: options.AdditionalTemplates.WithExternalServicesArg,
 				}
 			}
 		}
@@ -72,11 +67,13 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 		fmt.Printf("\n✅ Service successfully created\n")
 	}
 
-	if options.DisablePersistentFlags {
-		serviceInitCmd.SetHelpFunc(func(command *cobra.Command, i []string) {
-			disableServiceGlobalFlags()
-			command.Parent().HelpFunc()(command, i)
-		})
+	if options != nil {
+		if options.DisablePersistentFlags {
+			serviceInitCmd.SetHelpFunc(func(command *cobra.Command, i []string) {
+				disableServiceGlobalFlags()
+				command.Parent().HelpFunc()(command, i)
+			})
+		}
 	}
 
 	serviceCmd.AddCommand(serviceInitCmd)
