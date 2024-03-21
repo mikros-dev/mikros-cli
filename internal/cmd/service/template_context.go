@@ -13,10 +13,13 @@ type TemplateContext struct {
 	onFinishLifecycle  bool
 	serviceType        string
 
-	NewServiceArgs string
-	ServiceName    string
-	GrpcMethods    []*protobuf.Method
-	Imports        map[string][]ImportContext
+	ExternalFeaturesArg      string
+	ExternalServicesArg      string
+	NewServiceArgs           string
+	ServiceName              string
+	GrpcMethods              []*protobuf.Method
+	Imports                  map[string][]ImportContext
+	ServiceTypeCustomAnswers interface{}
 }
 
 type ImportContext struct {

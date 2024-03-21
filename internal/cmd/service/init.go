@@ -37,43 +37,37 @@ type InitOptions struct {
 }
 
 type TemplateFileOptions struct {
-	Files     embed.FS
-	Templates []mtemplates.TemplateFile
-	Api       map[string]interface{}
+	Files                   embed.FS
+	Templates               []mtemplates.TemplateFile
+	Api                     map[string]interface{}
+	NewServiceArgs          map[string]string
+	WithExternalFeaturesArg string
+	WithExternalServicesArg string
 }
 
 // Init initializes a new service locally.
 func Init(options *InitOptions) error {
-	var (
-		featuresDefinitions = make(map[string]interface{})
-		serviceDefinitions  = make(map[string]interface{})
-		answers             initSurveyAnswers
-	)
-
-	if err := survey.Ask(baseQuestions(options), &answers); err != nil {
+	answers := &initSurveyAnswers{}
+	if err := survey.Ask(baseQuestions(options), answers); err != nil {
 		return err
 	}
 
-	defs, err := runServiceAPISurvey(&answers, options)
-	if err != nil {
+	if err := runServiceSurvey(answers, options); err != nil {
 		return err
-	}
-	if defs != nil {
-		serviceDefinitions[answers.Type] = defs
 	}
 
 	// Presents only questions from selected features
 	for _, name := range answers.Features {
-		defs, err := runFeatureSurvey(name, options)
+		defs, save, err := runFeatureSurvey(name, options)
 		if err != nil {
 			return err
 		}
 		if defs != nil {
-			featuresDefinitions[name] = defs
+			answers.AddFeatureDefinitions(name, defs, save)
 		}
 	}
 
-	if err := generateTemplates(options, &answers, featuresDefinitions, serviceDefinitions); err != nil {
+	if err := generateTemplates(options, answers); err != nil {
 		return err
 	}
 
@@ -205,43 +199,44 @@ func getFeatureUIName(feature plugin.Feature) string {
 	return feature.Name()
 }
 
-// runServiceAPISurvey executes the survey that a service may have implemented.
-func runServiceAPISurvey(answers *initSurveyAnswers, options *InitOptions) (interface{}, error) {
+// runServiceSurvey executes the survey that a service may have implemented.
+func runServiceSurvey(answers *initSurveyAnswers, options *InitOptions) error {
 	if options.Services == nil {
-		return nil, nil
+		return nil
 	}
 
 	s, ok := options.Services.Services()[answers.Type]
 	if !ok {
-		return nil, nil
+		return nil
 	}
 
 	cli, ok := s.(msurvey.CLIFeature)
 	if !ok || !cli.IsCLISupported() {
-		return nil, nil
+		return nil
 	}
 
 	api, ok := s.(msurvey.FeatureSurvey)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 
 	svcSurvey := api.GetSurvey()
 	if s == nil {
-		return nil, nil
+		return nil
 	}
 
 	response, err := handleSurvey(answers.Type, svcSurvey)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	d, err := api.Answers(response)
+	d, save, err := api.Answers(response)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return d, nil
+	answers.SetServiceDefinitions(d, save)
+	return nil
 }
 
 func handleSurvey(name string, featureSurvey *msurvey.Survey) (map[string]interface{}, error) {
@@ -470,20 +465,20 @@ func sanitizeResponse(response map[string]interface{}) map[string]interface{} {
 	return response
 }
 
-func runFeatureSurvey(name string, options *InitOptions) (interface{}, error) {
+func runFeatureSurvey(name string, options *InitOptions) (interface{}, bool, error) {
 	f, err := options.Features.Feature(name)
 	if err != nil {
 		// Search again using mikros feature prefix. Maybe it is an implementation
 		// of a mikros feature.
 		f, err = options.Features.Feature(moptions.FeatureNamePrefix + name)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 
 	api, ok := f.(msurvey.FeatureSurvey)
 	if !ok {
-		return nil, nil
+		return nil, false, nil
 	}
 
 	var response map[string]interface{}
@@ -491,20 +486,20 @@ func runFeatureSurvey(name string, options *InitOptions) (interface{}, error) {
 	if s := api.GetSurvey(); s != nil {
 		res, err := handleSurvey(name, s)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		response = res
 	}
 
-	defs, err := api.Answers(response)
+	defs, save, err := api.Answers(response)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	return defs, nil
+	return defs, save, nil
 }
 
-func generateTemplates(options *InitOptions, answers *initSurveyAnswers, featuresDefinitions, serviceDefinitions map[string]interface{}) error {
+func generateTemplates(options *InitOptions, answers *initSurveyAnswers) error {
 	var (
 		destinationPath = options.Path
 	)
@@ -524,7 +519,7 @@ func generateTemplates(options *InitOptions, answers *initSurveyAnswers, feature
 	}
 
 	// Creates the service.toml file
-	if err := writeServiceDefinitions(destinationPath, answers, featuresDefinitions, serviceDefinitions); err != nil {
+	if err := writeServiceDefinitions(destinationPath, answers); err != nil {
 		return err
 	}
 
@@ -545,7 +540,7 @@ func generateTemplates(options *InitOptions, answers *initSurveyAnswers, feature
 		return err
 	}
 
-	// creates go source mtemplates
+	// creates go source templates
 	if err := generateSources(options, answers); err != nil {
 		return err
 	}
@@ -553,7 +548,7 @@ func generateTemplates(options *InitOptions, answers *initSurveyAnswers, feature
 	return nil
 }
 
-func writeServiceDefinitions(path string, answers *initSurveyAnswers, featureDefinitions, serviceDefinitions map[string]interface{}) error {
+func writeServiceDefinitions(path string, answers *initSurveyAnswers) error {
 	defs := &definition.Definitions{
 		Name:     answers.Name,
 		Types:    []string{answers.Type},
@@ -566,14 +561,16 @@ func writeServiceDefinitions(path string, answers *initSurveyAnswers, featureDef
 		return err
 	}
 
-	for name, d := range featureDefinitions {
-		if err := definitions.AppendFeature(path, name, d); err != nil {
-			return err
+	for name, d := range answers.FeatureDefinitions() {
+		if d.ShouldBeSaved() {
+			if err := definitions.AppendFeature(path, name, d.Definitions()); err != nil {
+				return err
+			}
 		}
 	}
 
-	for n, d := range serviceDefinitions {
-		if err := definitions.AppendService(path, n, d); err != nil {
+	if svcDefs := answers.ServiceDefinitions(); svcDefs != nil && svcDefs.ShouldBeSaved() {
+		if err := definitions.AppendService(path, answers.Type, svcDefs.Definitions()); err != nil {
 			return err
 		}
 	}
@@ -595,6 +592,15 @@ func generateSources(options *InitOptions, answers *initSurveyAnswers) error {
 }
 
 func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers) (TemplateContext, error) {
+	var (
+		svcDefs = answers.ServiceDefinitions()
+		defs    interface{}
+	)
+
+	if svcDefs != nil {
+		defs = svcDefs.Definitions()
+	}
+
 	externalService := func() bool {
 		switch answers.Type {
 		case definition.ServiceType_gRPC.String(), definition.ServiceType_HTTP.String(), definition.ServiceType_Script.String(), definition.ServiceType_Native.String():
@@ -604,15 +610,26 @@ func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers) (
 		return true
 	}
 
+	newServiceArgs, err := generateNewServiceArgs(options, answers)
+	if err != nil {
+		return TemplateContext{}, err
+	}
+
 	context := TemplateContext{
-		featuresExtensions: len(answers.Features) > 0,
-		servicesExtensions: externalService(),
-		onStartLifecycle:   slices.Contains(answers.Lifecycle, "OnStart"),
-		onFinishLifecycle:  slices.Contains(answers.Lifecycle, "OnFinish"),
-		serviceType:        answers.Type,
-		NewServiceArgs:     generateNewServiceArgs(answers),
-		ServiceName:        answers.Name,
-		Imports:            generateImports(answers),
+		featuresExtensions:       len(answers.Features) > 0,
+		servicesExtensions:       externalService(),
+		onStartLifecycle:         slices.Contains(answers.Lifecycle, "OnStart"),
+		onFinishLifecycle:        slices.Contains(answers.Lifecycle, "OnFinish"),
+		serviceType:              answers.Type,
+		NewServiceArgs:           newServiceArgs,
+		ServiceName:              answers.Name,
+		Imports:                  generateImports(answers),
+		ServiceTypeCustomAnswers: defs,
+	}
+
+	if options.ExternalTemplates != nil {
+		context.ExternalServicesArg = options.ExternalTemplates.WithExternalServicesArg
+		context.ExternalFeaturesArg = options.ExternalTemplates.WithExternalFeaturesArg
 	}
 
 	if filename := options.ProtoFilename; filename != "" {
@@ -626,7 +643,7 @@ func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers) (
 	return context, nil
 }
 
-func generateNewServiceArgs(answers *initSurveyAnswers) string {
+func generateNewServiceArgs(options *InitOptions, answers *initSurveyAnswers) (string, error) {
 	svcSnake := strcase.ToSnake(answers.Name)
 
 	switch answers.Type {
@@ -635,27 +652,58 @@ func generateNewServiceArgs(answers *initSurveyAnswers) string {
 			"grpc": &options.GrpcServiceOptions{
 				ProtoServiceDescription: &%spb.GrpcService_ServiceDesc,
 			},
-		},`, svcSnake)
+		},`, svcSnake), nil
 
 	case definition.ServiceType_HTTP.String():
 		return fmt.Sprintf(`Service: map[string]options.ServiceOptions{
 			"http": &options.HttpServiceOptions{
 				ProtoHttpServer: %spb.NewHttpServer(),
 			},
-		},`, svcSnake)
+		},`, svcSnake), nil
 
 	case definition.ServiceType_Native.String():
 		return `Service: map[string]options.ServiceOptions{
 			"native": &options.NativeServiceOptions{},
-		},`
+		},`, nil
 
 	case definition.ServiceType_Script.String():
 		return `Service: map[string]options.ServiceOptions{
 			"script": &options.ScriptServiceOptions{},
-		},`
+		},`, nil
+
+	default:
+		if options.ExternalTemplates != nil {
+			var (
+				svcDefs = answers.ServiceDefinitions()
+				defs    interface{}
+			)
+
+			if svcDefs != nil {
+				defs = svcDefs.Definitions()
+			}
+
+			if tpl, ok := options.ExternalTemplates.NewServiceArgs[answers.Type]; ok {
+				data := struct {
+					ServiceName              string
+					ServiceType              string
+					ServiceTypeCustomAnswers interface{}
+				}{
+					ServiceName:              answers.Type,
+					ServiceType:              answers.Name,
+					ServiceTypeCustomAnswers: defs,
+				}
+
+				block, err := templates.ParseBlock(tpl, options.ExternalTemplates.Api, data)
+				if err != nil {
+					return "", err
+				}
+
+				return block, nil
+			}
+		}
 	}
 
-	return ""
+	return "", nil
 }
 
 func generateImports(answers *initSurveyAnswers) map[string][]ImportContext {

@@ -16,9 +16,11 @@ type FeatureSurvey interface {
 	GetSurvey() *Survey
 
 	// Answers will receive the survey answers in a map where the key will be
-	// the Name field of each Question. It should return the client settings
-	// structure in case of success.
-	Answers(answers map[string]interface{}) (interface{}, error)
+	// the Name field of each Question. The value format directly depends on
+	// how the survey was assembled. It should return the client settings
+	// structure in case of success and a flag indicating if they should be
+	// written in the service.toml file or not.
+	Answers(answers map[string]interface{}) (interface{}, bool, error)
 }
 
 // FeatureSurveyUI when implemented by a mikros feature can override some of
