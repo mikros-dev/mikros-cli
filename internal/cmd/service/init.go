@@ -650,9 +650,9 @@ func generateNewServiceArgs(options *InitOptions, answers *initSurveyAnswers) (s
 	case definition.ServiceType_gRPC.String():
 		return fmt.Sprintf(`Service: map[string]options.ServiceOptions{
 			"grpc": &options.GrpcServiceOptions{
-				ProtoServiceDescription: &%spb.GrpcService_ServiceDesc,
+				ProtoServiceDescription: &%spb.%sService_ServiceDesc,
 			},
-		},`, svcSnake), nil
+		},`, svcSnake, strcase.ToCamel(answers.Name)), nil
 
 	case definition.ServiceType_HTTP.String():
 		return fmt.Sprintf(`Service: map[string]options.ServiceOptions{

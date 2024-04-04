@@ -14,7 +14,7 @@ type service struct {
 {{range .GrpcMethods}}
 func (s *service) {{.Name}}(ctx context.Context, req *{{$module}}pb.{{.InputName}}) (*{{$module}}pb.{{.OutputName}}, error) {
     if err := req.Validate(); err != nil {
-        return nil, s.Errors().InvalidArgument(ctx, err)
+        return nil, s.Errors().InvalidArgument(err).Submit(ctx)
     }
 
     return &{{$module}}pb.{{.OutputName}}{}, nil
