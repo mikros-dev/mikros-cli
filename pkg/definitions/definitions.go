@@ -49,13 +49,13 @@ func Write(path string, defs *definition.Definitions, options ...*WriteOptions) 
 
 // AppendService appends a new section inside the 'service.toml' file to be
 // loaded as settings for a specific service type.
-func AppendService(path, name string, serviceDefs interface{}) error {
+func AppendService(path, serviceType string, serviceDefs interface{}) error {
 	if serviceDefs == nil {
 		return errors.New("cannot handle nil definitions")
 	}
 
 	filename := filepath.Join(path, "service.toml")
-	if err := writeServiceDefinitions(filename, name, serviceDefs); err != nil {
+	if err := writeServiceDefinitions(filename, serviceType, serviceDefs); err != nil {
 		return err
 	}
 
@@ -84,7 +84,7 @@ func writeServiceDefinitions(filename, name string, defs interface{}) error {
 
 // AppendFeature appends a new section inside the 'service.toml' file to be
 // loaded as settings for a specific feature.
-func AppendFeature(path, name string, featureDefs interface{}) error {
+func AppendFeature(path, featureName string, featureDefs interface{}) error {
 	if featureDefs == nil {
 		return errors.New("cannot handle nil definitions")
 	}
@@ -103,12 +103,12 @@ func AppendFeature(path, name string, featureDefs interface{}) error {
 	features, ok := defs["features"]
 	if !ok {
 		defs["features"] = map[string]interface{}{
-			name: newFeatureDefs,
+			featureName: newFeatureDefs,
 		}
 	}
 	if ok {
 		features := features.(map[string]interface{})
-		features[name] = newFeatureDefs
+		features[featureName] = newFeatureDefs
 		defs["features"] = features
 	}
 
