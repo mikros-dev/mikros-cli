@@ -18,10 +18,10 @@ import (
 	"github.com/somatech1/mikros/components/plugin"
 
 	assets "github.com/somatech1/mikros-cli/internal/assets/templates"
-	"github.com/somatech1/mikros-cli/internal/definitions"
 	"github.com/somatech1/mikros-cli/internal/golang"
 	"github.com/somatech1/mikros-cli/internal/protobuf"
 	"github.com/somatech1/mikros-cli/internal/templates"
+	"github.com/somatech1/mikros-cli/pkg/definitions"
 	"github.com/somatech1/mikros-cli/pkg/path"
 	msurvey "github.com/somatech1/mikros-cli/pkg/survey"
 	mtemplates "github.com/somatech1/mikros-cli/pkg/templates"
