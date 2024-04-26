@@ -395,8 +395,16 @@ func buildSurveyPrompt(name string, q *msurvey.Question) survey.Prompt {
 func validateInnerSurveyCondition(response map[string]interface{}, condition *msurvey.QuestionCondition) bool {
 	if condition != nil {
 		if r, ok := response[condition.Name]; ok {
-			if v, ok := r.(string); ok && v == condition.Value {
-				return true
+			switch value := condition.Value.(type) {
+			case []string:
+				if slices.Contains(value, r.(string)) {
+					return true
+				}
+
+			case string:
+				if v, ok := r.(string); ok && v == value {
+					return true
+				}
 			}
 		}
 
@@ -747,7 +755,7 @@ func createServiceTemplates(options *InitOptions, filenames []mtemplates.Templat
 }
 
 func runTemplates(files embed.FS, filenames []mtemplates.TemplateFile, context interface{}, api map[string]interface{}) error {
-	tpls, err := templates.Load(&templates.LoadOptions{
+	tpls, err := mtemplates.Load(&mtemplates.LoadOptions{
 		TemplateNames: filenames,
 		Files:         files,
 		Api:           api,

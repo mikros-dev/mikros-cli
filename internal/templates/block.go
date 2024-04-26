@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"text/template"
+
+	"github.com/somatech1/mikros-cli/pkg/templates"
 )
 
 func ParseBlock(block string, api map[string]interface{}, data interface{}) (string, error) {
-	helperApi := defaultApi
+	helperApi := templates.DefaultApi
 	for k, v := range api {
 		helperApi[k] = v
 	}
