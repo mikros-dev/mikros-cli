@@ -61,7 +61,7 @@ type Question struct {
 
 type QuestionCondition struct {
 	Name  string
-	Value string
+	Value interface{}
 }
 
 type PromptKind int
