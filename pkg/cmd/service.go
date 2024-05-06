@@ -6,6 +6,7 @@ import (
 
 	"github.com/somatech1/mikros/components/plugin"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/somatech1/mikros-cli/pkg/templates"
 )
@@ -115,6 +116,8 @@ func ServiceCommand(options *ServiceCmdOptions) *cobra.Command {
 		case bool:
 			serviceCmd.PersistentFlags().Bool(flag.Name, v, flag.Usage)
 		}
+
+		_ = viper.BindPFlag(fmt.Sprintf("service-%v", flag.Name), serviceCmd.PersistentFlags().Lookup(flag.Name))
 	}
 
 	serviceInitCmdInit(&serviceInitCmdOptions{
