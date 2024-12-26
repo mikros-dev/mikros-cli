@@ -13,8 +13,15 @@ type initSurveyAnswers struct {
 	Features  []string
 	Lifecycle []string
 
+	kind               Kind
 	featureDefinitions map[string]*surveyAnswersDefinitions
 	serviceDefinitions *surveyAnswersDefinitions
+}
+
+func newInitSurveyAnswers(kind Kind) *initSurveyAnswers {
+	return &initSurveyAnswers{
+		kind: kind,
+	}
 }
 
 func (i *initSurveyAnswers) TemplateNames() []templates.TemplateFile {
