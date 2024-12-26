@@ -17,7 +17,7 @@ import (
 	moptions "github.com/somatech1/mikros/components/options"
 	"github.com/somatech1/mikros/components/plugin"
 
-	assets "github.com/somatech1/mikros-cli/internal/assets/templates"
+	golang_templates "github.com/somatech1/mikros-cli/internal/assets/golang"
 	"github.com/somatech1/mikros-cli/internal/golang"
 	"github.com/somatech1/mikros-cli/internal/protobuf"
 	"github.com/somatech1/mikros-cli/internal/templates"
@@ -28,6 +28,7 @@ import (
 )
 
 type InitOptions struct {
+	Kind              Kind
 	Path              string
 	ProtoFilename     string
 	FeatureNames      []string
@@ -35,6 +36,13 @@ type InitOptions struct {
 	Services          *plugin.ServiceSet
 	ExternalTemplates *TemplateFileOptions
 }
+
+type Kind int
+
+const (
+	KindGolang Kind = iota
+	KindRust
+)
 
 type TemplateFileOptions struct {
 	Files                   embed.FS
@@ -741,7 +749,7 @@ func generateImports(answers *initSurveyAnswers) map[string][]ImportContext {
 }
 
 func createServiceTemplates(options *InitOptions, filenames []mtemplates.TemplateFile, context interface{}) error {
-	if err := runTemplates(assets.Files, filenames, context, nil); err != nil {
+	if err := runTemplates(golang_templates.Files, filenames, context, nil); err != nil {
 		return err
 	}
 

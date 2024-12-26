@@ -37,10 +37,21 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 	serviceInitCmd.Flags().String("proto", "", "Uses an _api.proto file as source for the service API.")
 	_ = viper.BindPFlag("init-proto", serviceInitCmd.Flags().Lookup("proto"))
 
+	// service kind option
+	serviceInitCmd.Flags().Bool("rust", false, "Creates rust service.")
+	_ = viper.BindPFlag("init-rust", serviceInitCmd.Flags().Lookup("rust"))
+
+	serviceInitCmd.Flags().Bool("golang", true, "Creates golang service.")
+	_ = viper.BindPFlag("init-golang", serviceInitCmd.Flags().Lookup("golang"))
+
 	serviceInitCmd.Run = func(cmd *cobra.Command, args []string) {
 		initOptions := &service.InitOptions{
+			Kind:          service.KindGolang,
 			Path:          viper.GetString("init-path"),
 			ProtoFilename: viper.GetString("init-proto"),
+		}
+		if viper.GetBool("init-rust") {
+			initOptions.Kind = service.KindRust
 		}
 
 		if options != nil {
