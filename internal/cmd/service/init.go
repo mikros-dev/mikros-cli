@@ -2,66 +2,69 @@ package service
 
 import (
 	"embed"
-	"fmt"
+	"errors"
+	"github.com/somatech1/mikros-cli/internal/rust"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
-	"github.com/iancoleman/strcase"
 	"github.com/somatech1/mikros/components/definition"
 	"github.com/somatech1/mikros/components/plugin"
 
-	golang_templates "github.com/somatech1/mikros-cli/internal/assets/golang"
+	"github.com/somatech1/mikros-cli/internal/answers"
 	"github.com/somatech1/mikros-cli/internal/golang"
-	"github.com/somatech1/mikros-cli/internal/protobuf"
 	"github.com/somatech1/mikros-cli/internal/templates"
 	"github.com/somatech1/mikros-cli/pkg/definitions"
 	"github.com/somatech1/mikros-cli/pkg/path"
 	mtemplates "github.com/somatech1/mikros-cli/pkg/templates"
 )
 
+type TemplateExecutioner interface {
+	// PreExecution must be responsible for initializing the service base for
+	// the new service that will be created.
+	PreExecution(serviceName, destinationPath string) error
+
+	// GenerateContext is responsible for generating the context that will be
+	// used inside the templates when executed.
+	GenerateContext(answers *answers.InitSurveyAnswers, protoFilename string, externalTemplates interface{}) (interface{}, error)
+
+	// Templates must return all templates that the executioner will use.
+	Templates() []mtemplates.TemplateFile
+
+	// Files must return all .tmpl files that can be used by the executioner.
+	Files() embed.FS
+
+	// PostExecution is another handler where custom modifications can be made
+	// into the service that is being created. At this point, both initial source
+	// code and the service.toml file are already created.
+	PostExecution(destinationPath string) error
+}
+
 type InitOptions struct {
-	Kind              Kind
+	Language          templates.Language
 	Path              string
 	ProtoFilename     string
 	FeatureNames      []string
 	Features          *plugin.FeatureSet
 	Services          *plugin.ServiceSet
-	ExternalTemplates *TemplateFileOptions
-}
-
-type Kind int
-
-const (
-	KindGolang Kind = iota
-	KindRust
-)
-
-type TemplateFileOptions struct {
-	Files                   embed.FS
-	Templates               []mtemplates.TemplateFile
-	Api                     map[string]interface{}
-	NewServiceArgs          map[string]string
-	WithExternalFeaturesArg string
-	WithExternalServicesArg string
+	ExternalTemplates *golang.ExternalTemplates
 }
 
 // Init initializes a new service locally.
 func Init(options *InitOptions) error {
-	answers, err := runInitSurvey(options)
+	surveyAnswers, err := runInitSurvey(options)
 	if err != nil {
 		return err
 	}
 
-	if err := generateTemplates(options, answers); err != nil {
+	if err := generateTemplates(options, surveyAnswers); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func generateTemplates(options *InitOptions, answers *initSurveyAnswers) error {
+func generateTemplates(options *InitOptions, answers *answers.InitSurveyAnswers) error {
 	var (
 		destinationPath = options.Path
 	)
@@ -76,7 +79,17 @@ func generateTemplates(options *InitOptions, answers *initSurveyAnswers) error {
 		destinationPath = filepath.Join(cwd, strings.ToLower(answers.Name))
 	}
 
-	if _, err := path.CreatePath(destinationPath); err != nil {
+	executioner, err := getTemplateExecutioner(options.Language)
+	if err != nil {
+		return err
+	}
+
+	if err := executioner.PreExecution(answers.Name, destinationPath); err != nil {
+		return err
+	}
+
+	// creates go source templates
+	if err := generateSources(destinationPath, options, answers, executioner); err != nil {
 		return err
 	}
 
@@ -85,37 +98,30 @@ func generateTemplates(options *InitOptions, answers *initSurveyAnswers) error {
 		return err
 	}
 
-	// Switch to the destination path to create template sources
-	cwd, err := path.ChangeDir(destinationPath)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if e := os.Chdir(cwd); e != nil {
-			err = e
-		}
-	}()
-
-	// creates go.mod
-	if err := golang.ModInit(strcase.ToKebab(answers.Name)); err != nil {
-		return err
-	}
-
-	// creates go source templates
-	if err := generateSources(options, answers); err != nil {
+	if err := executioner.PostExecution(destinationPath); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func writeServiceDefinitions(path string, answers *initSurveyAnswers) error {
+func getTemplateExecutioner(language templates.Language) (TemplateExecutioner, error) {
+	if language == templates.LanguageGolang {
+		return &golang.Executioner{}, nil
+	}
+	if language == templates.LanguageRust {
+		return &rust.Executioner{}, nil
+	}
+
+	return nil, errors.New("unsupported language")
+}
+
+func writeServiceDefinitions(path string, answers *answers.InitSurveyAnswers) error {
 	defs := &definition.Definitions{
 		Name:     answers.Name,
 		Types:    []string{answers.Type},
 		Version:  answers.Version,
-		Language: answers.Language,
+		Language: answers.Language(),
 		Product:  strings.ToUpper(answers.Product),
 	}
 
@@ -140,162 +146,33 @@ func writeServiceDefinitions(path string, answers *initSurveyAnswers) error {
 	return nil
 }
 
-func generateSources(options *InitOptions, answers *initSurveyAnswers) error {
-	context, err := generateTemplateContext(options, answers)
+func generateSources(destinationPath string, options *InitOptions, answers *answers.InitSurveyAnswers, executioner TemplateExecutioner) error {
+	// Switch to the service folder so the initial source code can be created.
+	cwd, err := path.ChangeDir(destinationPath)
 	if err != nil {
 		return err
 	}
 
-	if err := createServiceTemplates(options, answers.TemplateNames(), context); err != nil {
+	defer func() {
+		if e := os.Chdir(cwd); e != nil {
+			err = e
+		}
+	}()
+
+	context, err := executioner.GenerateContext(answers, options.ProtoFilename, options.ExternalTemplates)
+	if err != nil {
+		return err
+	}
+
+	if err := createServiceTemplates(options, executioner, context); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers) (TemplateContext, error) {
-	var (
-		svcDefs = answers.ServiceDefinitions()
-		defs    interface{}
-	)
-
-	if svcDefs != nil {
-		defs = svcDefs.Definitions()
-	}
-
-	externalService := func() bool {
-		switch answers.Type {
-		case definition.ServiceType_gRPC.String(), definition.ServiceType_HTTP.String(), definition.ServiceType_Script.String(), definition.ServiceType_Native.String():
-			return false
-		}
-
-		return true
-	}
-
-	newServiceArgs, err := generateNewServiceArgs(options, answers)
-	if err != nil {
-		return TemplateContext{}, err
-	}
-
-	context := TemplateContext{
-		featuresExtensions:       len(answers.Features) > 0,
-		servicesExtensions:       externalService(),
-		onStartLifecycle:         slices.Contains(answers.Lifecycle, "start"),
-		onFinishLifecycle:        slices.Contains(answers.Lifecycle, "finish"),
-		serviceType:              answers.Type,
-		NewServiceArgs:           newServiceArgs,
-		ServiceName:              answers.Name,
-		Imports:                  generateImports(answers),
-		ServiceTypeCustomAnswers: defs,
-	}
-
-	if options.ExternalTemplates != nil {
-		context.ExternalServicesArg = options.ExternalTemplates.WithExternalServicesArg
-		context.ExternalFeaturesArg = options.ExternalTemplates.WithExternalFeaturesArg
-	}
-
-	if filename := options.ProtoFilename; filename != "" {
-		pbFile, err := protobuf.Parse(filename)
-		if err != nil {
-			return TemplateContext{}, err
-		}
-		context.GrpcMethods = pbFile.Methods
-	}
-
-	return context, nil
-}
-
-func generateNewServiceArgs(options *InitOptions, answers *initSurveyAnswers) (string, error) {
-	svcSnake := strcase.ToSnake(answers.Name)
-
-	switch answers.Type {
-	case definition.ServiceType_gRPC.String():
-		return fmt.Sprintf(`Service: map[string]options.ServiceOptions{
-			"grpc": &options.GrpcServiceOptions{
-				ProtoServiceDescription: &%spb.%sService_ServiceDesc,
-			},
-		},`, svcSnake, strcase.ToCamel(answers.Name)), nil
-
-	case definition.ServiceType_HTTP.String():
-		return fmt.Sprintf(`Service: map[string]options.ServiceOptions{
-			"http": &options.HttpServiceOptions{
-				ProtoHttpServer: %spb.NewHttpServer(),
-			},
-		},`, svcSnake), nil
-
-	case definition.ServiceType_Native.String():
-		return `Service: map[string]options.ServiceOptions{
-			"native": &options.NativeServiceOptions{},
-		},`, nil
-
-	case definition.ServiceType_Script.String():
-		return `Service: map[string]options.ServiceOptions{
-			"script": &options.ScriptServiceOptions{},
-		},`, nil
-
-	default:
-		if options.ExternalTemplates != nil {
-			var (
-				svcDefs = answers.ServiceDefinitions()
-				defs    interface{}
-			)
-
-			if svcDefs != nil {
-				defs = svcDefs.Definitions()
-			}
-
-			if tpl, ok := options.ExternalTemplates.NewServiceArgs[answers.Type]; ok {
-				data := struct {
-					ServiceName              string
-					ServiceType              string
-					ServiceTypeCustomAnswers interface{}
-				}{
-					ServiceName:              answers.Type,
-					ServiceType:              answers.Name,
-					ServiceTypeCustomAnswers: defs,
-				}
-
-				block, err := templates.ParseBlock(tpl, options.ExternalTemplates.Api, data)
-				if err != nil {
-					return "", err
-				}
-
-				return block, nil
-			}
-		}
-	}
-
-	return "", nil
-}
-
-func generateImports(answers *initSurveyAnswers) map[string][]ImportContext {
-	imports := map[string][]ImportContext{
-		"main": {
-			{
-				Path: "github.com/somatech1/mikros",
-			},
-			{
-				Path: "github.com/somatech1/mikros/components/options",
-			},
-		},
-		"service": {
-			{
-				Path: "github.com/somatech1/mikros",
-			},
-		},
-	}
-
-	if len(answers.Lifecycle) > 0 {
-		imports["lifecycle"] = append(imports["lifecycle"], ImportContext{
-			Path: "context",
-		})
-	}
-
-	return imports
-}
-
-func createServiceTemplates(options *InitOptions, filenames []mtemplates.TemplateFile, context interface{}) error {
-	if err := runTemplates(golang_templates.Files, filenames, context, nil); err != nil {
+func createServiceTemplates(options *InitOptions, executioner TemplateExecutioner, context interface{}) error {
+	if err := runTemplates(executioner.Files(), executioner.Templates(), context, nil); err != nil {
 		return err
 	}
 

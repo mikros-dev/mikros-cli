@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/somatech1/mikros-cli/internal/cmd/service"
+	"github.com/somatech1/mikros-cli/internal/golang"
+	"github.com/somatech1/mikros-cli/internal/templates"
 )
 
 type serviceInitCmdOptions struct {
@@ -46,12 +48,12 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 
 	serviceInitCmd.Run = func(cmd *cobra.Command, args []string) {
 		initOptions := &service.InitOptions{
-			Kind:          service.KindGolang,
+			Language:      templates.LanguageGolang,
 			Path:          viper.GetString("init-path"),
 			ProtoFilename: viper.GetString("init-proto"),
 		}
 		if viper.GetBool("init-rust") {
-			initOptions.Kind = service.KindRust
+			initOptions.Language = templates.LanguageRust
 		}
 
 		if options != nil {
@@ -59,7 +61,7 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 			initOptions.Services = options.Services
 
 			if options.AdditionalTemplates != nil {
-				initOptions.ExternalTemplates = &service.TemplateFileOptions{
+				initOptions.ExternalTemplates = &golang.ExternalTemplates{
 					Files:                   options.AdditionalTemplates.Files,
 					Templates:               options.AdditionalTemplates.Templates,
 					Api:                     options.AdditionalTemplates.Api,
@@ -91,7 +93,7 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 }
 
 func disableServiceGlobalFlags() {
-	flagsToHide := []string{}
+	var flagsToHide []string
 	serviceCmd.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
 		flagsToHide = append(flagsToHide, flag.Name)
 	})

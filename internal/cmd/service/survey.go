@@ -9,38 +9,40 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-playground/validator/v10"
 	"github.com/somatech1/mikros/components/definition"
-	moptions "github.com/somatech1/mikros/components/options"
+	"github.com/somatech1/mikros/components/options"
 	"github.com/somatech1/mikros/components/plugin"
 
+	"github.com/somatech1/mikros-cli/internal/answers"
+	"github.com/somatech1/mikros-cli/internal/templates"
 	msurvey "github.com/somatech1/mikros-cli/pkg/survey"
 )
 
-func runInitSurvey(options *InitOptions) (*initSurveyAnswers, error) {
-	answers := newInitSurveyAnswers(options.Kind)
+func runInitSurvey(opt *InitOptions) (*answers.InitSurveyAnswers, error) {
+	surveyAnswers := answers.NewInitSurveyAnswers(opt.Language)
 
-	if err := survey.Ask(baseQuestions(options), answers); err != nil {
+	if err := survey.Ask(baseQuestions(opt), surveyAnswers); err != nil {
 		return nil, err
 	}
 
-	if err := runServiceSurvey(answers, options); err != nil {
+	if err := runServiceTypeSurvey(surveyAnswers, opt); err != nil {
 		return nil, err
 	}
 
 	// Presents only questions from selected features
-	for _, name := range answers.Features {
-		defs, save, err := runFeatureSurvey(name, options)
+	for _, name := range surveyAnswers.Features {
+		defs, save, err := runFeatureSurvey(name, opt)
 		if err != nil {
 			return nil, err
 		}
 		if defs != nil {
-			answers.AddFeatureDefinitions(name, defs, save)
+			surveyAnswers.AddFeatureDefinitions(name, defs, save)
 		}
 	}
 
-	return answers, nil
+	return surveyAnswers, nil
 }
 
-func baseQuestions(options *InitOptions) []*survey.Question {
+func baseQuestions(opt *InitOptions) []*survey.Question {
 	supportedTypes := []string{
 		definition.ServiceType_gRPC.String(),
 		definition.ServiceType_HTTP.String(),
@@ -48,8 +50,8 @@ func baseQuestions(options *InitOptions) []*survey.Question {
 		definition.ServiceType_Script.String(),
 	}
 
-	if options.Services != nil {
-		for name := range options.Services.Services() {
+	if opt.Services != nil {
+		for name := range opt.Services.Services() {
 			supportedTypes = append(supportedTypes, name)
 		}
 	}
@@ -75,16 +77,6 @@ func baseQuestions(options *InitOptions) []*survey.Question {
 				Message:  "Select the type of service:",
 				Options:  supportedTypes,
 				PageSize: len(supportedTypes),
-			},
-			Validate: survey.Required,
-		},
-		// Language
-		{
-			Name: "language",
-			Prompt: &survey.Select{
-				Message:  "Select the service main programming language:",
-				Options:  definition.SupportedLanguages(),
-				PageSize: len(definition.SupportedLanguages()),
 			},
 			Validate: survey.Required,
 		},
@@ -119,37 +111,49 @@ func baseQuestions(options *InitOptions) []*survey.Question {
 				survey.MaxLength(512),
 			),
 		},
-		// Lifecycle
-		{
+	}
+
+	if opt.Language == templates.LanguageGolang {
+		questions = append(questions, &survey.Question{
 			Name: "lifecycle",
 			Prompt: &survey.MultiSelect{
 				Message: "Select lifecycle events to handle in the service:",
 				Options: []string{"start", "finish"},
 			},
-		},
-	}
+		})
 
-	if options.Features != nil {
-		var (
-			featureNames = options.FeatureNames
-			iter         = options.Features.Iterator()
-		)
+		// Features is only supported for golang services by now.
+		if opt.Features != nil {
+			var (
+				featureNames = opt.FeatureNames
+				iter         = opt.Features.Iterator()
+			)
 
-		for f, next := iter.Next(); next; f, next = iter.Next() {
-			if api, ok := f.(msurvey.CLIFeature); ok {
-				if api.IsCLISupported() {
-					featureNames = append(featureNames, getFeatureUIName(f))
+			for f, next := iter.Next(); next; f, next = iter.Next() {
+				if api, ok := f.(msurvey.CLIFeature); ok {
+					if api.IsCLISupported() {
+						featureNames = append(featureNames, getFeatureUIName(f))
+					}
 				}
 			}
-		}
 
-		// Features
+			// Features
+			questions = append(questions, &survey.Question{
+				Name: "features",
+				Prompt: &survey.MultiSelect{
+					Message:  "Select the features the service will have:",
+					Options:  featureNames,
+					PageSize: len(featureNames),
+				},
+			})
+		}
+	}
+
+	if opt.Language == templates.LanguageRust {
 		questions = append(questions, &survey.Question{
-			Name: "features",
-			Prompt: &survey.MultiSelect{
-				Message:  "Select the features the service will have:",
-				Options:  featureNames,
-				PageSize: len(featureNames),
+			Name: "lifecycle_rust",
+			Prompt: &survey.Confirm{
+				Message: "Enable lifecycle events to handle in the service?",
 			},
 		})
 	}
@@ -165,13 +169,14 @@ func getFeatureUIName(feature plugin.Feature) string {
 	return feature.Name()
 }
 
-// runServiceSurvey executes the survey that a service may have implemented.
-func runServiceSurvey(answers *initSurveyAnswers, options *InitOptions) error {
-	if options.Services == nil {
+// runServiceTypeSurvey executes the survey that a specific service type may
+// have implemented.
+func runServiceTypeSurvey(answers *answers.InitSurveyAnswers, opt *InitOptions) error {
+	if opt.Services == nil {
 		return nil
 	}
 
-	s, ok := options.Services.Services()[answers.Type]
+	s, ok := opt.Services.Services()[answers.Type]
 	if !ok {
 		return nil
 	}
@@ -320,36 +325,36 @@ func surveyFromQuestion(name string, entrySurvey *msurvey.Survey) (map[string]in
 	return sanitizeResponse(response), nil
 }
 
-func buildSurveyPrompt(name string, q *msurvey.Question) survey.Prompt {
-	switch q.Prompt {
+func buildSurveyPrompt(name string, question *msurvey.Question) survey.Prompt {
+	switch question.Prompt {
 	case msurvey.PromptInput:
 		return &survey.Input{
-			Message: fmt.Sprintf("[%s] %s", name, q.Message),
-			Default: q.Default,
+			Message: fmt.Sprintf("[%s] %s", name, question.Message),
+			Default: question.Default,
 		}
 
 	case msurvey.PromptSelect:
 		return &survey.Select{
-			Message:  fmt.Sprintf("[%s] %s", name, q.Message),
-			Options:  q.Options,
-			PageSize: len(q.Options),
-			Default:  q.Default,
+			Message:  fmt.Sprintf("[%s] %s", name, question.Message),
+			Options:  question.Options,
+			PageSize: len(question.Options),
+			Default:  question.Default,
 		}
 
 	case msurvey.PromptMultiSelect:
 		return &survey.MultiSelect{
-			Message: fmt.Sprintf("[%s] %s", name, q.Message),
-			Options: q.Options,
+			Message: fmt.Sprintf("[%s] %s", name, question.Message),
+			Options: question.Options,
 		}
 
 	case msurvey.PromptMultiline:
 		return &survey.Multiline{
-			Message: fmt.Sprintf("[%s] %s", name, q.Message),
+			Message: fmt.Sprintf("[%s] %s", name, question.Message),
 		}
 
 	case msurvey.PromptConfirm:
 		return &survey.Confirm{
-			Message: fmt.Sprintf("[%s] %s", name, q.Message),
+			Message: fmt.Sprintf("[%s] %s", name, question.Message),
 		}
 
 	default:
@@ -439,12 +444,12 @@ func sanitizeResponse(response map[string]interface{}) map[string]interface{} {
 	return response
 }
 
-func runFeatureSurvey(name string, options *InitOptions) (interface{}, bool, error) {
-	f, err := options.Features.Feature(name)
+func runFeatureSurvey(name string, opt *InitOptions) (interface{}, bool, error) {
+	f, err := opt.Features.Feature(name)
 	if err != nil {
 		// Search again using mikros feature prefix. Maybe it is an implementation
 		// of a mikros feature.
-		f, err = options.Features.Feature(moptions.FeatureNamePrefix + name)
+		f, err = opt.Features.Feature(options.FeatureNamePrefix + name)
 		if err != nil {
 			return nil, false, err
 		}
