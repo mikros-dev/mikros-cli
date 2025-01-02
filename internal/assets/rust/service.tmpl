@@ -1,0 +1,101 @@
+
+use std::sync::Arc;
+{{if or .IsGrpcService .IsHttpService}}
+use tonic::{Request, Response, Status};
+
+pub mod {{.ModuleName}} {
+    include!("generated/{{.ModuleName}}.rs");
+}
+{{end}}
+{{- if .IsGrpcService}}
+use {{.ModuleName}}::{{toSnake .ServiceName}}_server::{{"{"}}{{.ServiceName}}, {{.ServiceName}}Server{{"}"}};
+{{- end}}
+{{- if .IsHttpService}}
+use api::router::Router;
+{{- end}}
+{{- if or .IsScriptService .IsNativeService}}
+use mikros::errors as merrors;
+use mikros::service::context::Context;
+{{- end}}
+{{- if .IsHttpService}}
+use axum::extract::State;
+use mikros::http::ServiceState;
+use mikros::Mutex;
+{{- end}}
+{{if .IsHttpService}}
+#[derive(Clone, Default)]
+{{- else }}
+#[derive(Clone)]
+{{- end}}
+pub struct Service;
+
+impl Service {
+    {{- if .IsGrpcService}}
+    pub fn new() -> {{.ServiceName}}Server<Service> {
+        let service = Arc::new(Self{});
+        {{.ServiceName}}Server::from_arc(service)
+    }
+    {{- end}}
+    {{- if or .IsScriptService .IsNativeService}}
+    pub fn new() -> Self {
+        Self{}
+    }
+    {{- end}}
+    {{- if .IsHttpService}}
+    pub fn new() -> Router {
+        let service = Arc::new(Self::default());
+        Router::new(service)
+    }
+    {{- end}}
+}
+
+{{if or .IsGrpcService .IsHttpService -}}{{$moduleName := .ModuleName}}
+#[tonic::async_trait]
+impl {{.ServiceName}} for Service {
+    {{- range .Methods}}
+    async fn {{toSnake .Name}}(
+        &self,
+        request: Request<{{$moduleName}}::{{.RequestName}}>,
+    ) -> Result<Response<{{$moduleName}}::{{.ResponseName}}>, Status> {
+        todo!()
+    }
+    {{end}}
+}
+{{- end}}
+{{- if .IsScriptService}}
+#[async_trait::async_trait]
+impl mikros::service::script::ScriptService for Service {
+    async fn run(&self, ctx: &Context) -> merrors::Result<()> {
+        todo!()
+    }
+
+    async fn cleanup(&self, ctx: &Context) {
+        todo!()
+    }
+}
+{{- end}}
+{{- if .IsNativeService}}
+#[async_trait::async_trait]
+impl mikros::service::native::NativeService for Service {
+    async fn start(&self, ctx: &Context) -> merrors::Result<()> {
+        todo!()
+    }
+
+    async fn stop(&self, ctx: &Context) {
+        todo!()
+    }
+}
+{{- end}}
+
+{{if .HasLifecycle}}
+#[async_trait::async_trait]
+impl mikros::service::lifecycle::Lifecycle for Service {
+    async fn on_start(&mut self, ctx: &Context) -> merrors::Result<()> {
+        todo!()
+    }
+
+    async fn on_finish(&self) -> merrors::Result<()> {
+        todo!()
+    }
+}
+{{- end}}

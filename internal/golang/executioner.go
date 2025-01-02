@@ -10,7 +10,7 @@ import (
 	"github.com/somatech1/mikros/components/definition"
 
 	"github.com/somatech1/mikros-cli/internal/answers"
-	"github.com/somatech1/mikros-cli/internal/assets/golang"
+	golang_tpl "github.com/somatech1/mikros-cli/internal/assets/golang"
 	"github.com/somatech1/mikros-cli/internal/protobuf"
 	"github.com/somatech1/mikros-cli/internal/templates"
 	"github.com/somatech1/mikros-cli/pkg/path"
@@ -229,7 +229,7 @@ func (e *Executioner) Templates() []mtemplates.TemplateFile {
 }
 
 func (e *Executioner) Files() embed.FS {
-	return golang.Files
+	return golang_tpl.Files
 }
 
 func (e *Executioner) PostExecution(_ string) error {

@@ -3,7 +3,6 @@ package service
 import (
 	"embed"
 	"errors"
-	"github.com/somatech1/mikros-cli/internal/rust"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/somatech1/mikros-cli/internal/answers"
 	"github.com/somatech1/mikros-cli/internal/golang"
+	"github.com/somatech1/mikros-cli/internal/rust"
 	"github.com/somatech1/mikros-cli/internal/templates"
 	"github.com/somatech1/mikros-cli/pkg/definitions"
 	"github.com/somatech1/mikros-cli/pkg/path"

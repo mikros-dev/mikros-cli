@@ -1,3 +1,5 @@
+mod service;
+
 use mikros::service::builder::ServiceBuilder;
 use service::Service as AppService;
 
@@ -6,7 +8,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let s = AppService::new();
     let mut svc = ServiceBuilder::default()
         {{.ServiceTypeBuilderCall}}
-        .script(Box::new(s))
         .build()?;
 
     Ok(svc.start().await?)

@@ -2,11 +2,14 @@ package rust
 
 import (
 	"embed"
+	"os"
+	"path/filepath"
 
 	"github.com/somatech1/mikros/components/definition"
 
 	"github.com/somatech1/mikros-cli/internal/answers"
 	"github.com/somatech1/mikros-cli/internal/assets/rust"
+	"github.com/somatech1/mikros-cli/internal/protobuf"
 	"github.com/somatech1/mikros-cli/pkg/templates"
 )
 
@@ -23,31 +26,71 @@ func (e *Executioner) PreExecution(serviceName, destinationPath string) error {
 	return nil
 }
 
-func (e *Executioner) GenerateContext(answers *answers.InitSurveyAnswers, _ string, _ interface{}) (interface{}, error) {
+func (e *Executioner) GenerateContext(answers *answers.InitSurveyAnswers, filename string, _ interface{}) (interface{}, error) {
 	// Store values to be used later
 	e.hasLifecycle = answers.RustLifecycle
 	e.serviceType = answers.Type
 
-	return nil, nil
+	// Build the context
+	ctx := &Context{
+		HasLifecycle: e.hasLifecycle,
+		ServiceName:  answers.Name,
+		serviceType:  answers.Type,
+	}
+
+	if filename != "" {
+		pbFile, err := protobuf.Parse(filename)
+		if err != nil {
+			return Context{}, err
+		}
+
+		ctx.ModuleName = pbFile.ModuleName
+		ctx.ServiceName = pbFile.ServiceName
+
+		var methods []*Method
+		for _, m := range pbFile.Methods {
+			methods = append(methods, &Method{
+				Name:         m.Name,
+				RequestName:  m.InputName,
+				ResponseName: m.OutputName,
+			})
+		}
+		ctx.Methods = methods
+	}
+
+	return ctx, nil
 }
 
 func (e *Executioner) Templates() []templates.TemplateFile {
-	return []templates.TemplateFile{}
+	tpls := []templates.TemplateFile{
+		{
+			Name:      "main",
+			Output:    "src/main",
+			Extension: "rs",
+		},
+		{
+			Name:      "service",
+			Output:    "src/service",
+			Extension: "rs",
+		},
+	}
+
+	return tpls
 }
 
 func (e *Executioner) Files() embed.FS {
 	return rust.Files
 }
 
-type dependency struct {
-	Name    string
-	Version string
-	Git     string
-	Path    string
-	Feature []string
-}
-
 func (e *Executioner) PostExecution(destinationPath string) error {
+	type dependency struct {
+		Name    string
+		Version string
+		Git     string
+		Path    string
+		Feature []string
+	}
+
 	dependencies := []dependency{
 		{
 			Name: "mikros",
@@ -94,5 +137,25 @@ func (e *Executioner) PostExecution(destinationPath string) error {
 		}
 	}
 
+	if err := formatCode(destinationPath); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func formatCode(destinationPath string) error {
+	return filepath.Walk(filepath.Join(destinationPath, "src"), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if filepath.Ext(path) == ".rs" {
+			if err := rustFmt(path); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }

@@ -21,7 +21,7 @@ func cargoInit(destinationPath, name string) error {
 		_ = os.Chdir(cwd)
 	}()
 
-	_, err = process.Exec("cargo", "init", name)
+	_, err = process.Exec("cargo", "init", "--quiet", name)
 	return err
 }
 
@@ -39,6 +39,7 @@ func cargoAdd(destinationPath, name, version, git, path string, features []strin
 	args := []string{
 		"cargo",
 		"add",
+		"--quiet",
 	}
 	if version != "" {
 		args = append(args, fmt.Sprintf("%v@%v", name, version))
@@ -53,7 +54,11 @@ func cargoAdd(destinationPath, name, version, git, path string, features []strin
 		args = append(args, "--features", strings.Join(features, ","))
 	}
 
-	out, err := process.Exec(args...)
-	println(string(out))
+	_, err = process.Exec(args...)
+	return err
+}
+
+func rustFmt(filename string) error {
+	_, err := process.Exec("rustfmt", "--edition", "2021", filename)
 	return err
 }
