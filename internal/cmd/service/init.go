@@ -88,12 +88,10 @@ func generateTemplates(options *InitOptions, answers *answers.InitSurveyAnswers)
 		return err
 	}
 
-	// creates go source templates
 	if err := generateSources(destinationPath, options, answers, executioner); err != nil {
 		return err
 	}
 
-	// Creates the service.toml file
 	if err := writeServiceDefinitions(destinationPath, answers); err != nil {
 		return err
 	}

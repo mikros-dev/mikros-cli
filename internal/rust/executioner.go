@@ -4,6 +4,7 @@ import (
 	"embed"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/somatech1/mikros/components/definition"
 
@@ -44,8 +45,8 @@ func (e *Executioner) GenerateContext(answers *answers.InitSurveyAnswers, filena
 			return Context{}, err
 		}
 
-		ctx.ModuleName = pbFile.ModuleName
-		ctx.ServiceName = pbFile.ServiceName
+		ctx.ModuleName = getServiceNameOnly(pbFile.ModuleName)
+		ctx.ServiceName = getServiceNameOnly(pbFile.ServiceName)
 
 		var methods []*Method
 		for _, m := range pbFile.Methods {
@@ -59,6 +60,11 @@ func (e *Executioner) GenerateContext(answers *answers.InitSurveyAnswers, filena
 	}
 
 	return ctx, nil
+}
+
+func getServiceNameOnly(serviceName string) string {
+	parts := strings.Split(serviceName, ".")
+	return parts[len(parts)-1]
 }
 
 func (e *Executioner) Templates() []templates.TemplateFile {

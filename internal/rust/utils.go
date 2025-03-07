@@ -54,11 +54,13 @@ func cargoAdd(destinationPath, name, version, git, path string, features []strin
 		args = append(args, "--features", strings.Join(features, ","))
 	}
 
-	_, err = process.Exec(args...)
+	out, err := process.Exec(args...)
+	println(string(out))
 	return err
 }
 
 func rustFmt(filename string) error {
-	_, err := process.Exec("rustfmt", "--edition", "2021", filename)
+	out, err := process.Exec("rustfmt", "--edition", "2021", filename)
+	println(string(out))
 	return err
 }
