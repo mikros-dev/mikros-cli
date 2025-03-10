@@ -1,4 +1,4 @@
-package service
+package golang
 
 import (
 	"github.com/somatech1/mikros/components/definition"

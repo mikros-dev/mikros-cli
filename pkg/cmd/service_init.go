@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/somatech1/mikros-cli/internal/cmd/service"
+	"github.com/somatech1/mikros-cli/internal/golang"
+	"github.com/somatech1/mikros-cli/internal/templates"
 )
 
 type serviceInitCmdOptions struct {
@@ -37,10 +39,21 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 	serviceInitCmd.Flags().String("proto", "", "Uses an _api.proto file as source for the service API.")
 	_ = viper.BindPFlag("init-proto", serviceInitCmd.Flags().Lookup("proto"))
 
+	// service kind option
+	serviceInitCmd.Flags().Bool("rust", false, "Creates rust service.")
+	_ = viper.BindPFlag("init-rust", serviceInitCmd.Flags().Lookup("rust"))
+
+	serviceInitCmd.Flags().Bool("golang", true, "Creates golang service.")
+	_ = viper.BindPFlag("init-golang", serviceInitCmd.Flags().Lookup("golang"))
+
 	serviceInitCmd.Run = func(cmd *cobra.Command, args []string) {
 		initOptions := &service.InitOptions{
+			Language:      templates.LanguageGolang,
 			Path:          viper.GetString("init-path"),
 			ProtoFilename: viper.GetString("init-proto"),
+		}
+		if viper.GetBool("init-rust") {
+			initOptions.Language = templates.LanguageRust
 		}
 
 		if options != nil {
@@ -48,7 +61,7 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 			initOptions.Services = options.Services
 
 			if options.AdditionalTemplates != nil {
-				initOptions.ExternalTemplates = &service.TemplateFileOptions{
+				initOptions.ExternalTemplates = &golang.ExternalTemplates{
 					Files:                   options.AdditionalTemplates.Files,
 					Templates:               options.AdditionalTemplates.Templates,
 					Api:                     options.AdditionalTemplates.Api,
@@ -80,7 +93,7 @@ func serviceInitCmdInit(options *serviceInitCmdOptions) {
 }
 
 func disableServiceGlobalFlags() {
-	flagsToHide := []string{}
+	var flagsToHide []string
 	serviceCmd.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
 		flagsToHide = append(flagsToHide, flag.Name)
 	})
