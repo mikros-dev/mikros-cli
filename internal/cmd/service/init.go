@@ -17,14 +17,14 @@ import (
 	moptions "github.com/somatech1/mikros/components/options"
 	"github.com/somatech1/mikros/components/plugin"
 
-	assets "github.com/somatech1/mikros-cli/internal/assets/templates"
-	"github.com/somatech1/mikros-cli/internal/golang"
-	"github.com/somatech1/mikros-cli/internal/protobuf"
-	"github.com/somatech1/mikros-cli/internal/templates"
-	"github.com/somatech1/mikros-cli/pkg/definitions"
-	"github.com/somatech1/mikros-cli/pkg/path"
-	msurvey "github.com/somatech1/mikros-cli/pkg/survey"
-	mtemplates "github.com/somatech1/mikros-cli/pkg/templates"
+	assets "github.com/mikros-dev/mikros-cli/internal/assets/templates"
+	"github.com/mikros-dev/mikros-cli/internal/golang"
+	"github.com/mikros-dev/mikros-cli/internal/protobuf"
+	"github.com/mikros-dev/mikros-cli/internal/templates"
+	"github.com/mikros-dev/mikros-cli/pkg/definitions"
+	"github.com/mikros-dev/mikros-cli/pkg/path"
+	msurvey "github.com/mikros-dev/mikros-cli/pkg/survey"
+	mtemplates "github.com/mikros-dev/mikros-cli/pkg/templates"
 )
 
 type InitOptions struct {

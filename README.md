@@ -10,7 +10,7 @@ from the command line.
 In order to install the CLI locally, one can execute the following command:
 
 ```bash
-go install github.com/somatech1/mikros-cli/cmd/mikros@latest
+go install github.com/mikros-dev/mikros-cli/cmd/mikros@latest
 ```
 
 ## Creating a new service template

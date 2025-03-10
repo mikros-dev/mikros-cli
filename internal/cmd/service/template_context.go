@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/somatech1/mikros/components/definition"
 
-	"github.com/somatech1/mikros-cli/internal/protobuf"
+	"github.com/mikros-dev/mikros-cli/internal/protobuf"
 )
 
 type TemplateContext struct {

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/somatech1/mikros-cli/pkg/templates"
+	"github.com/mikros-dev/mikros-cli/pkg/templates"
 )
 
 type initSurveyAnswers struct {

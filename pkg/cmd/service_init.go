@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/somatech1/mikros-cli/internal/cmd/service"
+	"github.com/mikros-dev/mikros-cli/internal/cmd/service"
 )
 
 type serviceInitCmdOptions struct {
