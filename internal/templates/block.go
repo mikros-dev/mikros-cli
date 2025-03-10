@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/somatech1/mikros-cli/pkg/templates"
+	"github.com/mikros-dev/mikros-cli/pkg/templates"
 )
 
 func ParseBlock(block string, api map[string]interface{}, data interface{}) (string, error) {
