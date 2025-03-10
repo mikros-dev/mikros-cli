@@ -1,17 +1,17 @@
 package survey
 
-// CLIFeature is a behavior that a client should have to let the mikros-cli
+// CLIFeature is a behavior that a client should have to let the mikros CLI
 // know more information about it.
 type CLIFeature interface {
 	// IsCLISupported tells, by returning true or false, if the client is
-	// available to be manipulated by the mikros-cli tool.
+	// available to be manipulated by the mikros CLI tool.
 	IsCLISupported() bool
 }
 
 // FeatureSurvey is a behavior that a client should have to be used by the
-// mikros-cli tool.
+// mikros CLI tool.
 type FeatureSurvey interface {
-	// GetSurvey must return a list of Question objects to tell mikros-cli how
+	// GetSurvey must return a list of Question objects to tell mikros CLI how
 	// the settings will be prompted to the user.
 	GetSurvey() *Survey
 
@@ -24,19 +24,19 @@ type FeatureSurvey interface {
 }
 
 // FeatureSurveyUI when implemented by a mikros feature can override some of
-// its information to be used by the mikros-cli UI.
+// its information to be used by the mikros CLI UI.
 type FeatureSurveyUI interface {
 	UIName() string
 }
 
-// Survey is a structure that a client uses to tell mikros-cli how to present
+// Survey is a structure that a client uses to tell mikros CLI how to present
 // its survey for the user to answer questions.
 type Survey struct {
 	// AskOne when true sets that the survey will be executed each question
 	// separately.
 	AskOne bool
 
-	// ConfirmQuestion is a question that will inform mikros-cli that the
+	// ConfirmQuestion is a question that will inform mikros CLI that the
 	// following questions will be asked inside a loop, until the user
 	// decides to stop.
 	ConfirmQuestion *Question
