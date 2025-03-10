@@ -9,9 +9,9 @@ import (
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "mikros-cli",
+		Use:   "mikros",
 		Short: "A \"swiss army knife\" for dealing with mikros framework tasks.",
-		Long: `mikros-cli is a command to help the developer use the mikros
+		Long: `mikros is a command to help the developer use the mikros
 framework to create new services.`,
 	}
 )
