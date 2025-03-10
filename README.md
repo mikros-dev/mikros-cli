@@ -1,8 +1,8 @@
-# mikros-cli
+# mikros CLI
 
 ## About
 
-`mikros-cli` is a CLI utility that helps a user creating or editing services
+`mikros` is a CLI utility that helps a user creating or editing services
 from the command line.
 
 ## Installing
@@ -10,16 +10,16 @@ from the command line.
 In order to install the CLI locally, one can execute the following command:
 
 ```bash
-go install github.com/somatech1/mikros-cli@latest
+go install github.com/somatech1/mikros-cli/cmd/mikros@latest
 ```
 
 ## Creating a new service template
 
-After installing the `mikros-cli` command locally, is possible to create
+After installing the `mikros` command locally, is possible to create
 new service templates with it by executing in the following way:
 
 ```bash
-mikros-cli service init
+mikros service init
 ```
 
 This will execute a little survey, where mandatory information must be
@@ -31,7 +31,11 @@ it.
 
 ## Roadmap
 
-WIP
+* Change main command to `new`
+* Full support for rust services
+* Support for creating protobuf projects
+* Support for creating services monorepo projects
+* Command for creating protobuf file from templates
 
 ## License
 
