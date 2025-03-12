@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package plugins.service;
+
+option go_package = "github.com/mikros-dev/mikros-cli/pkg/plugin/service;service";
+
+import "google/protobuf/struct.proto";
+import "plugin/survey/survey.proto";
+
+service Plugin {
+  rpc GetName(Empty) returns(GetNameResponse);
+  rpc GetKind(Empty) returns(GetKindResponse);
+  rpc GetSurvey(Empty) returns(GetSurveyResponse);
+  rpc ValidateAnswers(ValidateAnswersRequest) returns(ValidateAnswersResponse);
+  rpc GetTemplate(Empty) returns(GetTemplateResponse);
+  rpc Stop(Empty) returns(Empty);
+}
+
+message Empty {}
+
+message GetNameResponse {
+  string name = 1;
+}
+
+message GetKindResponse {
+  string kind = 1;
+}
+
+message GetSurveyResponse {
+  plugins.survey.Survey survey = 1;
+}
+
+message ValidateAnswersRequest {
+  google.protobuf.Struct answers = 1;
+}
+
+message ValidateAnswersResponse {
+  bool should_save = 1;
+  google.protobuf.Struct values = 2;
+}
+
+message GetTemplateResponse {
+  // Gathers detailed information related to all templates being added.
+  repeated TemplateFile templates = 1;
+
+  // Allows adding custom content for external service kind when creating the
+  // main file of a new template service. It will be available inside the
+  // {{.NewServiceArgs}} inside the template.
+  //
+  // It can be a template string that receives the internal default API and
+  // the custom Api as functions available to be used as well as a short data
+  // context with the following fields:
+  //
+  // {{.ServiceName}}: holding the current service name.
+  // {{.ServiceType}}: holding the current service type.
+  // {{.ServiceTypeCustomAnswers}}: holding custom answers related to the current
+  //								  service type.
+  string new_service_args = 2;
+
+  // Sets the argument of method .WithExternalFeatures() inside the main
+  // template.
+  string with_external_features_arg = 3;
+
+  // Sets the argument of method .WithExternalServices() inside the main
+  // template.
+  string with_external_services_arg = 4;
+}
+
+message TemplateFile {
+  string content = 1;
+  string name = 2;
+  string output = 3;
+  string extension = 4;
+}

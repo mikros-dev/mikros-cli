@@ -60,3 +60,21 @@ func ChangeDir(path string) (string, error) {
 
 	return cwd, nil
 }
+
+// IsExecutable checks if the given path is a file and has the executable permission.
+func IsExecutable(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+
+	if !info.Mode().IsRegular() {
+		return false
+	}
+
+	if info.Mode().Perm()&0111 != 0 {
+		return true
+	}
+
+	return false
+}

@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package plugins.feature;
+
+option go_package = "github.com/mikros-dev/mikros-cli/pkg/plugin/feature;feature";
+
+import "google/protobuf/struct.proto";
+import "plugin/survey/survey.proto";
+
+service Plugin {
+  rpc GetName(Empty) returns(GetNameResponse);
+  rpc GetUIName(Empty) returns(GetUINameResponse);
+  rpc GetSurvey(Empty) returns(GetSurveyResponse);
+  rpc ValidateAnswers(ValidateAnswersRequest) returns(ValidateAnswersResponse);
+  rpc Stop(Empty) returns(Empty);
+}
+
+message Empty {}
+
+message GetNameResponse {
+  string name = 1;
+}
+
+message GetUINameResponse {
+  string name = 1;
+}
+
+message GetSurveyResponse {
+  plugins.survey.Survey survey = 1;
+}
+
+message ValidateAnswersRequest {
+  google.protobuf.Struct answers = 1;
+}
+
+message ValidateAnswersResponse {
+  bool should_save = 1;
+  google.protobuf.Struct values = 2;
+}

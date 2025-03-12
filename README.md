@@ -19,7 +19,7 @@ After installing the `mikros` command locally, is possible to create
 new service templates with it by executing in the following way:
 
 ```bash
-mikros service init
+mikros new service
 ```
 
 This will execute a little survey, where mandatory information must be
@@ -31,7 +31,7 @@ it.
 
 ## Roadmap
 
-* Change main command to `new`
+* ~~Change main command to `new`~~
 * Full support for rust services
 * Support for creating protobuf projects
 * Support for creating services monorepo projects
