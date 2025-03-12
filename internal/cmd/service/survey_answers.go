@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/mikros-dev/mikros-cli/pkg/templates"
+	"github.com/mikros-dev/mikros-cli/internal/template"
 )
 
 type initSurveyAnswers struct {
@@ -17,8 +17,8 @@ type initSurveyAnswers struct {
 	serviceDefinitions *surveyAnswersDefinitions
 }
 
-func (i *initSurveyAnswers) TemplateNames() []templates.TemplateFile {
-	names := []templates.TemplateFile{
+func (i *initSurveyAnswers) TemplateNames() []template.File {
+	names := []template.File{
 		{
 			Name:      "main",
 			Extension: "go",
@@ -30,7 +30,7 @@ func (i *initSurveyAnswers) TemplateNames() []templates.TemplateFile {
 	}
 
 	if len(i.Lifecycle) > 0 {
-		names = append(names, templates.TemplateFile{
+		names = append(names, template.File{
 			Name:      "lifecycle",
 			Extension: "go",
 		})

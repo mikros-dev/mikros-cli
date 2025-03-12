@@ -1,5 +1,9 @@
 package survey
 
+import (
+	surveypb "github.com/mikros-dev/mikros-cli/pkg/plugin/survey"
+)
+
 // CLIFeature is a behavior that a client should have to let the mikros CLI
 // know more information about it.
 type CLIFeature interface {
@@ -16,7 +20,7 @@ type FeatureSurvey interface {
 	GetSurvey() *Survey
 
 	// Answers will receive the survey answers in a map where the key will be
-	// the Name field of each Question. The value format directly depends on
+	// the FileName field of each Question. The value format directly depends on
 	// how the survey was assembled. It should return the client settings
 	// structure in case of success and a flag indicating if they should be
 	// written in the service.toml file or not.
@@ -74,3 +78,8 @@ const (
 	PromptConfirm
 	PromptSurvey
 )
+
+func FromProtoSurvey(s *surveypb.Survey) *Survey {
+	// TODO
+	return nil
+}

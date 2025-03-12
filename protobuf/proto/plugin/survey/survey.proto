@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package plugins.survey;
+
+option go_package = "github.com/mikros-dev/mikros-cli/pkg/plugin/survey;survey";
+
+import "google/protobuf/struct.proto";
+
+message Survey {
+  bool ask_one = 1;
+  Question confirm_question = 2;
+  repeated Question questions = 3;
+}
+
+message Question {
+  bool required = 1;
+  bool confirm_after = 2;
+  PromptKind prompt = 3;
+  string message = 4;
+  string name = 5;
+  string default = 6;
+  QuestionCondition condition = 7;
+  repeated string options = 8;
+  Survey survey = 9;
+}
+
+message QuestionCondition {
+  string name = 1;
+  google.protobuf.Value value = 2;
+}
+
+enum PromptKind {
+  PROMPT_KIND_UNSPECIFIED = 0;
+  PROMPT_KIND_INPUT = 1;
+  PROMPT_KIND_MULTI_SELECT = 2;
+  PROMPT_KIND_MULTILINE = 3;
+  PROMPT_KIND_CONFIRM = 4;
+  PROMPT_KIND_SURVEY = 5;
+}

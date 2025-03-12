@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/mikros-dev/mikros-cli/pkg/cmd"
+	"github.com/mikros-dev/mikros-cli/internal/cmd"
 )
 
 func main() {
