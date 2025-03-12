@@ -2,14 +2,14 @@ package client
 
 import (
 	"context"
-	"os"
+	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/protobuf/types/known/structpb"
 	"os/exec"
 	"path/filepath"
 	"time"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mikros-dev/mikros-cli/internal/survey"
 	featurepb "github.com/mikros-dev/mikros-cli/pkg/plugin/feature"
@@ -28,21 +28,24 @@ func NewFeature(path, name string) *Feature {
 }
 
 func (f *Feature) Start() error {
+	println("1")
 	if err := f.cmd.Start(); err != nil {
 		return err
 	}
 
-	// Wait for the plugin to signal it's ready
-	for {
-		if _, err := os.Stat("plugin_ready.txt"); err == nil {
-			break
-		}
+	//println("2")
+	//// Wait for the plugin to signal it's ready
+	//for {
+	//	if _, err := os.Stat("plugin_ready.txt"); err == nil {
+	//		break
+	//	}
+	//
+	//	time.Sleep(100 * time.Millisecond)
+	//}
 
-		time.Sleep(100 * time.Millisecond)
-	}
-
-	// Remove the ready signal for the next plugin
-	_ = os.Remove("plugin_ready.txt")
+	//println("3")
+	//// Remove the ready signal for the next plugin
+	//_ = os.Remove("plugin_ready.txt")
 
 	conn, err := grpc.NewClient(
 		"localhost:50051",
@@ -52,6 +55,20 @@ func (f *Feature) Start() error {
 		return err
 	}
 
+	healthClient := grpc_health_v1.NewHealthClient(conn)
+
+	// Retry checking health until the server is ready
+	for {
+		resp, err := healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
+		fmt.Println(resp.GetStatus())
+		if err == nil && resp.GetStatus() == grpc_health_v1.HealthCheckResponse_SERVING {
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	println("vai tentar conectar")
 	f.client = featurepb.NewPluginClient(conn)
 	f.conn = conn
 

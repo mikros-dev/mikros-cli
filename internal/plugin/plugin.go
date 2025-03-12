@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/mikros-dev/mikros-cli/internal/path"
 	"github.com/mikros-dev/mikros-cli/internal/plugin/client"
@@ -56,7 +57,9 @@ func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 		names    []string
 	)
 
+	println("Loading features UI names...")
 	if !path.FindPath(basePath) {
+		println("could not find features UI names path")
 		return nil, nil
 	}
 
@@ -66,10 +69,13 @@ func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 	}
 
 	for _, file := range files {
-		if !path.IsExecutable(file.Name()) {
+		println(file.Name())
+		if !path.IsExecutable(filepath.Join(basePath, file.Name())) {
+			println("not executable")
 			continue
 		}
 
+		println("loading plugin", file.Name())
 		p := client.NewFeature(basePath, file.Name())
 		if err := p.Start(); err != nil {
 			return nil, err
