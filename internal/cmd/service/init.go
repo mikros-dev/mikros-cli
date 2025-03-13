@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -23,9 +22,10 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/plugin/client"
 	"github.com/mikros-dev/mikros-cli/internal/protobuf"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
-	msurvey "github.com/mikros-dev/mikros-cli/internal/survey"
 	"github.com/mikros-dev/mikros-cli/internal/template"
-	servicepb "github.com/mikros-dev/mikros-cli/pkg/plugin/service"
+	"github.com/mikros-dev/mikros-cli/internal/ui"
+	msurvey "github.com/mikros-dev/mikros-cli/pkg/survey"
+	mtemplate "github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
 type InitOptions struct {
@@ -45,21 +45,14 @@ func Init(cfg *settings.Settings, options *InitOptions) error {
 		return err
 	}
 
-	ctx := context.Background()
-	svc, err := runServiceSurvey(ctx, cfg, answers)
+	svc, err := runServiceSurvey(cfg, answers)
 	if err != nil {
 		return err
 	}
 
-	if svc != nil {
-		defer func() {
-			_ = svc.Stop(ctx)
-		}()
-	}
-
 	// Presents only questions from selected features
 	for _, name := range answers.Features {
-		defs, save, err := runFeatureSurvey(ctx, cfg, name)
+		defs, save, err := runFeatureSurvey(cfg, name)
 		if err != nil {
 			return err
 		}
@@ -68,7 +61,7 @@ func Init(cfg *settings.Settings, options *InitOptions) error {
 		}
 	}
 
-	if err := generateTemplates(ctx, options, answers, svc); err != nil {
+	if err := generateTemplates(options, answers, svc); err != nil {
 		return err
 	}
 
@@ -184,8 +177,8 @@ func baseQuestions(cfg *settings.Settings) ([]*survey.Question, error) {
 }
 
 // runServiceSurvey executes the survey that a service may have implemented.
-func runServiceSurvey(ctx context.Context, cfg *settings.Settings, answers *initSurveyAnswers) (*client.Service, error) {
-	svc, err := plugin.GetServicePlugin(ctx, cfg, answers.Type)
+func runServiceSurvey(cfg *settings.Settings, answers *initSurveyAnswers) (*client.Service, error) {
+	svc, err := plugin.GetServicePlugin(cfg, answers.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +187,7 @@ func runServiceSurvey(ctx context.Context, cfg *settings.Settings, answers *init
 		return nil, nil
 	}
 
-	svcSurvey, err := svc.GetSurvey(ctx)
+	svcSurvey, err := svc.GetSurvey()
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +197,7 @@ func runServiceSurvey(ctx context.Context, cfg *settings.Settings, answers *init
 		return nil, err
 	}
 
-	d, save, err := svc.ValidateAnswers(ctx, response)
+	d, save, err := svc.ValidateAnswers(response)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +213,7 @@ func handleSurvey(name string, featureSurvey *msurvey.Survey) (map[string]interf
 	loop:
 		for {
 			if !featureSurvey.ConfirmQuestion.ConfirmAfter {
-				res := msurvey.YesNo(featureSurvey.ConfirmQuestion.Message)
+				res := ui.YesNo(featureSurvey.ConfirmQuestion.Message)
 				if !res {
 					break loop
 				}
@@ -233,7 +226,7 @@ func handleSurvey(name string, featureSurvey *msurvey.Survey) (map[string]interf
 			responses = append(responses, response)
 
 			if featureSurvey.ConfirmQuestion.ConfirmAfter {
-				res := msurvey.YesNo(featureSurvey.ConfirmQuestion.Message)
+				res := ui.YesNo(featureSurvey.ConfirmQuestion.Message)
 				if !res {
 					break loop
 				}
@@ -268,9 +261,9 @@ func surveyFromQuestion(name string, entrySurvey *msurvey.Survey) (map[string]in
 		question := &survey.Question{
 			Name: q.Name,
 			Validate: func() func(v interface{}) error {
-				if q.Validate != nil {
-					return q.Validate
-				}
+				//if q.Validate != nil {
+				//	return q.Validate
+				//}
 
 				if q.Required {
 					return survey.Required
@@ -390,9 +383,9 @@ func validateInnerSurveyCondition(response map[string]interface{}, condition *ms
 
 func askOne(prompt survey.Prompt, question *msurvey.Question) (interface{}, error) {
 	getOptions := func() survey.AskOpt {
-		if question.Validate != nil {
-			return survey.WithValidator(question.Validate)
-		}
+		//if question.Validate != nil {
+		//	return survey.WithValidator(question.Validate)
+		//}
 		if question.Required {
 			return survey.WithValidator(survey.Required)
 		}
@@ -447,8 +440,8 @@ func sanitizeResponse(response map[string]interface{}) map[string]interface{} {
 	return response
 }
 
-func runFeatureSurvey(ctx context.Context, cfg *settings.Settings, name string) (interface{}, bool, error) {
-	f, err := plugin.GetFeaturePlugin(ctx, cfg, name)
+func runFeatureSurvey(cfg *settings.Settings, name string) (interface{}, bool, error) {
+	f, err := plugin.GetFeaturePlugin(cfg, name)
 	if err != nil {
 		return nil, false, err
 	}
@@ -456,11 +449,7 @@ func runFeatureSurvey(ctx context.Context, cfg *settings.Settings, name string) 
 		return nil, false, nil
 	}
 
-	defer func() {
-		_ = f.Stop(ctx)
-	}()
-
-	s, err := f.GetSurvey(ctx)
+	s, err := f.GetSurvey()
 	if err != nil {
 		return nil, false, err
 	}
@@ -473,7 +462,7 @@ func runFeatureSurvey(ctx context.Context, cfg *settings.Settings, name string) 
 		return nil, false, err
 	}
 
-	defs, save, err := f.ValidateAnswers(ctx, res)
+	defs, save, err := f.ValidateAnswers(res)
 	if err != nil {
 		return nil, false, err
 	}
@@ -481,7 +470,7 @@ func runFeatureSurvey(ctx context.Context, cfg *settings.Settings, name string) 
 	return defs, save, nil
 }
 
-func generateTemplates(ctx context.Context, options *InitOptions, answers *initSurveyAnswers, svc *client.Service) error {
+func generateTemplates(options *InitOptions, answers *initSurveyAnswers, svc *client.Service) error {
 	var (
 		destinationPath = options.Path
 	)
@@ -523,7 +512,7 @@ func generateTemplates(ctx context.Context, options *InitOptions, answers *initS
 	}
 
 	// creates go source templates
-	if err := generateSources(ctx, options, answers, svc); err != nil {
+	if err := generateSources(options, answers, svc); err != nil {
 		return err
 	}
 
@@ -560,10 +549,10 @@ func writeServiceDefinitions(path string, answers *initSurveyAnswers) error {
 	return nil
 }
 
-func generateSources(ctx context.Context, options *InitOptions, answers *initSurveyAnswers, svc *client.Service) error {
-	var externalTemplate *servicepb.GetTemplateResponse
+func generateSources(options *InitOptions, answers *initSurveyAnswers, svc *client.Service) error {
+	var externalTemplate *mtemplate.Template
 	if svc != nil {
-		res, err := svc.GetTemplates(ctx)
+		res, err := svc.GetTemplates()
 		if err != nil {
 			return err
 		}
@@ -582,7 +571,7 @@ func generateSources(ctx context.Context, options *InitOptions, answers *initSur
 	return nil
 }
 
-func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers, externalTemplate *servicepb.GetTemplateResponse) (TemplateContext, error) {
+func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers, externalTemplate *mtemplate.Template) (TemplateContext, error) {
 	var (
 		svcDefs = answers.ServiceDefinitions()
 		defs    interface{}
@@ -622,8 +611,8 @@ func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers, e
 	}
 
 	if externalTemplate != nil {
-		tplCtx.ExternalServicesArg = externalTemplate.GetWithExternalServicesArg()
-		tplCtx.ExternalFeaturesArg = externalTemplate.GetWithExternalFeaturesArg()
+		tplCtx.ExternalServicesArg = externalTemplate.WithExternalServicesArg
+		tplCtx.ExternalFeaturesArg = externalTemplate.WithExternalFeaturesArg
 	}
 
 	if filename := options.ProtoFilename; filename != "" {
@@ -637,7 +626,7 @@ func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers, e
 	return tplCtx, nil
 }
 
-func generateNewServiceArgs(answers *initSurveyAnswers, externalTemplate *servicepb.GetTemplateResponse) (string, error) {
+func generateNewServiceArgs(answers *initSurveyAnswers, externalTemplate *mtemplate.Template) (string, error) {
 	svcSnake := strcase.ToSnake(answers.Name)
 
 	switch answers.Type {
@@ -676,7 +665,7 @@ func generateNewServiceArgs(answers *initSurveyAnswers, externalTemplate *servic
 				defs = svcDefs.Definitions()
 			}
 
-			if args := externalTemplate.GetNewServiceArgs(); args != "" {
+			if args := externalTemplate.NewServiceArgs; args != "" {
 				data := struct {
 					ServiceName              string
 					ServiceType              string
@@ -726,7 +715,7 @@ func generateImports(answers *initSurveyAnswers) map[string][]ImportContext {
 	return imports
 }
 
-func createServiceTemplates(filenames []template.File, tplContext interface{}, externalTemplate *servicepb.GetTemplateResponse) error {
+func createServiceTemplates(filenames []template.File, tplContext interface{}, externalTemplate *mtemplate.Template) error {
 	// Execute our templates
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
 		TemplateNames: filenames,
@@ -741,20 +730,20 @@ func createServiceTemplates(filenames []template.File, tplContext interface{}, e
 
 	// Then execute templates from the selected plugin (if any).
 	if externalTemplate != nil {
-		templateNames := make([]template.File, len(externalTemplate.GetTemplate()))
-		for i, t := range externalTemplate.GetTemplate() {
+		templateNames := make([]template.File, len(externalTemplate.Templates))
+		for i, t := range externalTemplate.Templates {
 			templateNames[i] = template.File{
-				Name:      t.GetName(),
-				Output:    t.GetOutput(),
-				Extension: t.GetExtension(),
+				Name:      t.Name,
+				Output:    t.Output,
+				Extension: t.Extension,
 			}
 		}
 
 		files := make([]*template.Data, len(templateNames))
-		for i, t := range externalTemplate.GetTemplate() {
+		for i, t := range externalTemplate.Templates {
 			files[i] = &template.Data{
 				FileName: templateNames[i].Name,
-				Content:  []byte(t.GetContent()),
+				Content:  []byte(t.Content),
 			}
 		}
 

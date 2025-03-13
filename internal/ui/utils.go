@@ -1,4 +1,4 @@
-package survey
+package ui
 
 import (
 	"github.com/AlecAivazis/survey/v2"
