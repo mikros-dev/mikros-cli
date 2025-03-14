@@ -38,5 +38,5 @@ func Execute() {
 // executed.
 func loadCommands(cfg *settings.Settings) {
 	newCmdInit(cfg)
-	setupCmdInit()
+	configCmdInit()
 }

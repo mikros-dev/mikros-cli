@@ -7,21 +7,21 @@ import (
 )
 
 var (
-	setupCmd = &cobra.Command{
-		Use:   "setup",
+	configCmd = &cobra.Command{
+		Use:   "config",
 		Short: "Set up mikros related requirements",
-		Long: `setup helps installing and adjusting mikros related requirements
+		Long: `config helps installing and adjusting mikros related requirements
 inside the system.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := cmd.Help(); err != nil {
-				fmt.Println("setup:", err)
+				fmt.Println("config:", err)
 				return
 			}
 		},
 	}
 )
 
-func setupCmdInit() {
-	setupConfigCmdInit()
-	rootCmd.AddCommand(setupCmd)
+func configCmdInit() {
+	configSetupCmdInit()
+	rootCmd.AddCommand(configCmd)
 }

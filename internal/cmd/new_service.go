@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mikros-dev/mikros-cli/internal/cmd/service"
+	"github.com/mikros-dev/mikros-cli/internal/cmd/new/service"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
