@@ -36,6 +36,8 @@ it.
 * Support for creating protobuf projects
 * Support for creating services monorepo projects
 * Command for creating protobuf file from templates
+* Use [bubbletea](https://github.com/charmbracelet/bubbletea) for UI surveys.
+* ~~Add command to generate default config file~~
 
 ## License
 

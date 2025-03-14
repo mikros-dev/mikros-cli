@@ -9,17 +9,35 @@ import (
 	"github.com/mikros-dev/mikros-cli/pkg/survey"
 )
 
+// FeatureApi is the API that a feature plugin must implement to be supported
+// by mikros CLI.
 type FeatureApi interface {
+	// Name must return the feature name that is registered inside the mikros
+	// framework.
 	Name() string
+
+	// UIName must return the feature name that will be displayed for the user
+	// during the survey to create a new service.
 	UIName() string
+
+	// Survey should return a survey.Survey object defining which properties
+	// the user must configure to use this feature.
 	Survey() *survey.Survey
+
+	// ValidateAnswers receives answers from the feature survey to be validated
+	// inside. It should return the data that should be written into the
+	// 'service.toml' file and a flag indicating if it should be written or not.
 	ValidateAnswers(in map[string]interface{}) (map[string]interface{}, bool, error)
 }
 
+// Feature is the feature plugin object that provides the channel that mikros
+// CLI recognizes as a plugin.
 type Feature struct {
 	api FeatureApi
 }
 
+// NewFeature creates a Feature object by receiving an object which must
+// implement the FeatureApi interface.
 func NewFeature(api FeatureApi) (*Feature, error) {
 	if api == nil {
 		return nil, errors.New("api cannot be nil")
@@ -30,6 +48,7 @@ func NewFeature(api FeatureApi) (*Feature, error) {
 	}, nil
 }
 
+// Run executes the plugin.
 func (f *Feature) Run() error {
 	// Supported plugin options
 	nFlag := flag.Bool("n", false, "Get plugin name")

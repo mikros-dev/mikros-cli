@@ -9,18 +9,31 @@ import (
 	"github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
+// ServiceApi is the API that a service plugin must implement to be supported
+// by mikros CLI.
 type ServiceApi interface {
-	Name() string
+	// Kind must return the new service type for services.
 	Kind() string
+
+	// Survey should return a survey.Survey object defining which properties
+	// the user must configure to use this service type.
 	Survey() *survey.Survey
+
+	// ValidateAnswers receives answers from the service survey to be validated
+	// inside. It should return the data that should be written into the
+	// 'service.toml' file and a flag indicating if it should be written or not.
 	ValidateAnswers(in map[string]interface{}) (map[string]interface{}, bool, error)
 	Template() *template.Template
 }
 
+// Service is the service plugin object that provides the channel that mikros
+// CLI recognizes as a plugin.
 type Service struct {
 	api ServiceApi
 }
 
+// NewService creates a Service object by receiving an object which must
+// implement the ServiceApi interface.
 func NewService(api ServiceApi) (*Service, error) {
 	if api == nil {
 		return nil, errors.New("api cannot be nil")
@@ -31,9 +44,9 @@ func NewService(api ServiceApi) (*Service, error) {
 	}, nil
 }
 
+// Run executes the plugin.
 func (s *Service) Run() error {
 	// Supported plugin options
-	nFlag := flag.Bool("n", false, "Get plugin name")
 	sFlag := flag.Bool("s", false, "Retrieve feature survey questions")
 	vFlag := flag.Bool("v", false, "Validate answers")
 	tFlag := flag.Bool("t", false, "Retrieve plugin custom templates")
@@ -44,8 +57,6 @@ func (s *Service) Run() error {
 	encoder := plugin.NewEncoder()
 
 	switch {
-	case *nFlag:
-		encoder.SetName(s.api.Name())
 	case *sFlag:
 		encoder.SetSurvey(s.api.Survey())
 	case *vFlag:

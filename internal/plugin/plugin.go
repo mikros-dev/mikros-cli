@@ -11,7 +11,7 @@ import (
 
 func GetNewServiceKinds(cfg *settings.Settings) ([]string, error) {
 	var (
-		basePath = os.ExpandEnv(cfg.Paths.Services)
+		basePath = cfg.Paths.Services
 		types    []string
 	)
 
@@ -43,7 +43,7 @@ func GetNewServiceKinds(cfg *settings.Settings) ([]string, error) {
 
 func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 	var (
-		basePath = os.ExpandEnv(cfg.Paths.Features)
+		basePath = cfg.Paths.Features
 		names    []string
 	)
 
@@ -73,9 +73,9 @@ func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 	return names, nil
 }
 
-func GetServicePlugin(cfg *settings.Settings, name string) (*client.Service, error) {
+func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, error) {
 	var (
-		basePath = os.ExpandEnv(cfg.Paths.Services)
+		basePath = cfg.Paths.Services
 	)
 
 	if !path.FindPath(basePath) {
@@ -94,11 +94,11 @@ func GetServicePlugin(cfg *settings.Settings, name string) (*client.Service, err
 
 		p := client.NewService(basePath, file.Name())
 
-		pluginName, err := p.GetName()
+		pluginKind, err := p.GetKind()
 		if err != nil {
 			return nil, err
 		}
-		if pluginName == name {
+		if pluginKind == kind {
 			return p, nil
 		}
 	}

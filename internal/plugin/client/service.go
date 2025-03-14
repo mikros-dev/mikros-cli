@@ -48,20 +48,6 @@ func (s *Service) GetKind() (string, error) {
 	return d.Kind, nil
 }
 
-func (s *Service) GetName() (string, error) {
-	out, err := s.exec("-n")
-	if err != nil {
-		return "", err
-	}
-
-	d, err := data.DecodePluginData(out)
-	if err != nil {
-		return "", err
-	}
-
-	return d.Name, nil
-}
-
 func (s *Service) GetSurvey() (*survey.Survey, error) {
 	out, err := s.exec("-s")
 	if err != nil {

@@ -10,11 +10,11 @@ type Survey struct {
 	// ConfirmQuestion is a question that will inform mikros CLI that the
 	// following questions will be asked inside a loop, until the user
 	// decides to stop.
-	ConfirmQuestion *Question `json:"confirm_question"`
+	ConfirmQuestion *Question `json:"confirm_question,omitempty"`
 
 	// Questions gathers a list of questions that will be presented to the
 	// user.
-	Questions []*Question `json:"questions"`
+	Questions []*Question `json:"questions,omitempty"`
 }
 
 type Question struct {
@@ -30,8 +30,8 @@ type Question struct {
 }
 
 type QuestionCondition struct {
-	Name  string      `json:"name"`
-	Value interface{} `json:"value"`
+	Name  string      `json:"name,omitempty"`
+	Value interface{} `json:"value,omitempty"`
 }
 
 type PromptKind int
