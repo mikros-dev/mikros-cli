@@ -20,9 +20,9 @@ var (
 				return
 			}
 
-			fmt.Printf("\n✅ Project successfully created\n")
+			fmt.Printf("\n✅ Project successfully created\n\n")
 			fmt.Println("In order to start, execute the following command inside the new project directory:")
-			fmt.Println("    make setup")
+			fmt.Printf("\n$ make setup\n\n")
 		},
 	}
 )
