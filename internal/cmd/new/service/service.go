@@ -14,7 +14,7 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/somatech1/mikros/components/definition"
 
-	assets "github.com/mikros-dev/mikros-cli/internal/assets/templates"
+	service_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/service"
 	"github.com/mikros-dev/mikros-cli/internal/definitions"
 	"github.com/mikros-dev/mikros-cli/internal/golang"
 	"github.com/mikros-dev/mikros-cli/internal/path"
@@ -33,8 +33,8 @@ type InitOptions struct {
 	ProtoFilename string
 }
 
-// Init initializes a new service locally.
-func Init(cfg *settings.Settings, options *InitOptions) error {
+// New creates a new service template directory with initial source files.
+func New(cfg *settings.Settings, options *InitOptions) error {
 	questions, err := baseQuestions(cfg)
 	if err != nil {
 		return err
@@ -719,7 +719,7 @@ func createServiceTemplates(filenames []template.File, tplContext interface{}, e
 	// Execute our templates
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
 		TemplateNames: filenames,
-	}, assets.Files)
+	}, service_tpl.Files)
 	if err != nil {
 		return err
 	}

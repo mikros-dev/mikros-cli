@@ -1,4 +1,4 @@
-package templates
+package proto
 
 import (
 	"embed"

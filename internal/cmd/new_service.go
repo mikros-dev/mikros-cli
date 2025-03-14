@@ -34,7 +34,7 @@ func newServiceCmdInit(cfg *settings.Settings) {
 			ProtoFilename: viper.GetString("service-proto"),
 		}
 
-		if err := service.Init(cfg, initOptions); err != nil {
+		if err := service.New(cfg, initOptions); err != nil {
 			fmt.Println(err.Error())
 			return
 		}
