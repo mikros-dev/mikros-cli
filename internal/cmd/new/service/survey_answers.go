@@ -39,20 +39,18 @@ func (i *initSurveyAnswers) TemplateNames() []template.File {
 	return names
 }
 
-func (i *initSurveyAnswers) AddFeatureDefinitions(name string, answers interface{}, save bool) {
+func (i *initSurveyAnswers) AddFeatureDefinitions(name string, answers interface{}) {
 	if i.featureDefinitions == nil {
 		i.featureDefinitions = make(map[string]*surveyAnswersDefinitions)
 	}
 
 	i.featureDefinitions[name] = &surveyAnswersDefinitions{
-		save:        save,
 		definitions: answers,
 	}
 }
 
-func (i *initSurveyAnswers) SetServiceDefinitions(answers interface{}, save bool) {
+func (i *initSurveyAnswers) SetServiceDefinitions(answers interface{}) {
 	i.serviceDefinitions = &surveyAnswersDefinitions{
-		save:        save,
 		definitions: answers,
 	}
 }
@@ -66,12 +64,11 @@ func (i *initSurveyAnswers) FeatureDefinitions() map[string]*surveyAnswersDefini
 }
 
 type surveyAnswersDefinitions struct {
-	save        bool
 	definitions interface{}
 }
 
 func (s *surveyAnswersDefinitions) ShouldBeSaved() bool {
-	return s.save
+	return s != nil && s.definitions != nil
 }
 
 func (s *surveyAnswersDefinitions) Definitions() interface{} {

@@ -3,24 +3,20 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mikros-dev/mikros-cli/pkg/template"
+	"strings"
 
 	"github.com/mikros-dev/mikros-cli/pkg/survey"
+	"github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
 type PluginData struct {
-	Name     string             `json:"name,omitempty"`
-	UIName   string             `json:"ui_name,omitempty"`
-	Kind     string             `json:"kind,omitempty"`
-	Survey   *survey.Survey     `json:"survey,omitempty"`
-	Answers  *Answers           `json:"answers,omitempty"`
-	Template *template.Template `json:"template,omitempty"`
-	Error    error              `json:"error,omitempty"`
-}
-
-type Answers struct {
-	Answers map[string]interface{} `json:"answers,omitempty"`
-	Write   bool                   `json:"write,omitempty"`
+	Name     string                 `json:"name,omitempty"`
+	UIName   string                 `json:"ui_name,omitempty"`
+	Kind     string                 `json:"kind,omitempty"`
+	Survey   *survey.Survey         `json:"survey,omitempty"`
+	Answers  map[string]interface{} `json:"answers,omitempty"`
+	Template *template.Template     `json:"template,omitempty"`
+	Error    string                 `json:"error,omitempty"`
 }
 
 func (p *PluginData) Output() error {
@@ -34,8 +30,13 @@ func (p *PluginData) Output() error {
 }
 
 func DecodePluginData(in string) (*PluginData, error) {
-	var p PluginData
-	if err := json.Unmarshal([]byte(in), &p); err != nil {
+	var (
+		d = json.NewDecoder(strings.NewReader(in))
+		p PluginData
+	)
+
+	d.UseNumber()
+	if err := d.Decode(&p); err != nil {
 		return nil, err
 	}
 

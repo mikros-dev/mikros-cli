@@ -20,6 +20,10 @@ type Settings struct {
 }
 
 type Path struct {
+	Plugins Plugins `toml:"plugins"`
+}
+
+type Plugins struct {
 	Services string `toml:"services" default:"$HOME/.mikros/plugins/services"`
 	Features string `toml:"features" default:"$HOME/.mikros/plugins/features"`
 }
@@ -53,8 +57,8 @@ func NewDefault() (*Settings, error) {
 		return nil, err
 	}
 
-	cfg.Paths.Services = os.ExpandEnv(cfg.Paths.Services)
-	cfg.Paths.Features = os.ExpandEnv(cfg.Paths.Features)
+	cfg.Paths.Plugins.Services = os.ExpandEnv(cfg.Paths.Plugins.Services)
+	cfg.Paths.Plugins.Features = os.ExpandEnv(cfg.Paths.Plugins.Features)
 
 	return cfg, nil
 }

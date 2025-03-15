@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
+	"strings"
 
 	"github.com/mikros-dev/mikros-cli/internal/plugin"
 	"github.com/mikros-dev/mikros-cli/pkg/survey"
@@ -26,8 +28,8 @@ type FeatureApi interface {
 
 	// ValidateAnswers receives answers from the feature survey to be validated
 	// inside. It should return the data that should be written into the
-	// 'service.toml' file and a flag indicating if it should be written or not.
-	ValidateAnswers(in map[string]interface{}) (map[string]interface{}, bool, error)
+	// 'service.toml' file.
+	ValidateAnswers(in map[string]interface{}) (map[string]interface{}, error)
 }
 
 // Feature is the feature plugin object that provides the channel that mikros
@@ -68,7 +70,7 @@ func (f *Feature) Run() error {
 	case *sFlag:
 		encoder.SetSurvey(f.api.Survey())
 	case *vFlag:
-		if *input != "" {
+		if *input == "" {
 			return errors.New("invalid input")
 		}
 
@@ -77,12 +79,12 @@ func (f *Feature) Run() error {
 			return err
 		}
 
-		data, save, err := f.api.ValidateAnswers(in)
+		data, err := f.api.ValidateAnswers(in)
 		if err != nil {
 			return err
 		}
 
-		encoder.SetAnswers(data, save)
+		encoder.SetAnswers(data)
 	default:
 		return errors.New("no valid command specified")
 	}
@@ -95,10 +97,13 @@ func (f *Feature) Run() error {
 }
 
 func inputToMap(in string) (map[string]interface{}, error) {
-	var out map[string]interface{}
+	var (
+		out  map[string]interface{}
+		data = strings.ReplaceAll(in, "\\", "")
+	)
 
-	if err := json.Unmarshal([]byte(in), &out); err != nil {
-		return nil, err
+	if err := json.Unmarshal([]byte(data), &out); err != nil {
+		return nil, fmt.Errorf("%v: %w", data, err)
 	}
 
 	return out, nil

@@ -11,7 +11,7 @@ import (
 
 func GetNewServiceKinds(cfg *settings.Settings) ([]string, error) {
 	var (
-		basePath = cfg.Paths.Services
+		basePath = cfg.Paths.Plugins.Services
 		types    []string
 	)
 
@@ -43,7 +43,7 @@ func GetNewServiceKinds(cfg *settings.Settings) ([]string, error) {
 
 func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 	var (
-		basePath = cfg.Paths.Features
+		basePath = cfg.Paths.Plugins.Features
 		names    []string
 	)
 
@@ -75,7 +75,7 @@ func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 
 func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, error) {
 	var (
-		basePath = cfg.Paths.Services
+		basePath = cfg.Paths.Plugins.Services
 	)
 
 	if !path.FindPath(basePath) {
@@ -108,7 +108,7 @@ func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, err
 
 func GetFeaturePlugin(cfg *settings.Settings, name string) (*client.Feature, error) {
 	var (
-		basePath = os.ExpandEnv(cfg.Paths.Features)
+		basePath = cfg.Paths.Plugins.Features
 	)
 
 	if !path.FindPath(basePath) {
@@ -121,7 +121,7 @@ func GetFeaturePlugin(cfg *settings.Settings, name string) (*client.Feature, err
 	}
 
 	for _, file := range files {
-		if !path.IsExecutable(file.Name()) {
+		if !path.IsExecutable(filepath.Join(basePath, file.Name())) {
 			continue
 		}
 

@@ -28,11 +28,8 @@ func (e *Encoder) SetSurvey(s *survey.Survey) {
 	e.Survey = s
 }
 
-func (e *Encoder) SetAnswers(answers map[string]interface{}, write bool) {
-	e.Answers = &data.Answers{
-		Answers: answers,
-		Write:   write,
-	}
+func (e *Encoder) SetAnswers(answers map[string]interface{}) {
+	e.Answers = answers
 }
 
 func (e *Encoder) SetTemplate(template *template.Template) {
@@ -44,7 +41,7 @@ func (e *Encoder) SetKind(kind string) {
 }
 
 func (e *Encoder) SetError(err error) {
-	e.Error = err
+	e.Error = err.Error()
 }
 
 func (e *Encoder) Output() error {

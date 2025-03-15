@@ -62,23 +62,23 @@ func (s *Service) GetSurvey() (*survey.Survey, error) {
 	return d.Survey, nil
 }
 
-func (s *Service) ValidateAnswers(answers map[string]interface{}) (map[string]interface{}, bool, error) {
+func (s *Service) ValidateAnswers(answers map[string]interface{}) (map[string]interface{}, error) {
 	b, err := json.Marshal(answers)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	out, err := s.exec("-v", "-i", string(b))
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	d, err := data.DecodePluginData(out)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	return d.Answers.Answers, d.Answers.Write, nil
+	return d.Answers, nil
 }
 
 func (s *Service) GetTemplates() (*template.Template, error) {

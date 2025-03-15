@@ -50,13 +50,14 @@ func (p *Plugin) Survey() *survey.Survey {
 	}
 }
 
-func (p *Plugin) ValidateAnswers(in map[string]interface{}) (map[string]interface{}, bool, error) {
+func (p *Plugin) ValidateAnswers(in map[string]interface{}) (map[string]interface{}, error) {
 	values := map[string]interface{}{
+		"enabled":     true,
 		"collections": []string{"name1", "name2"},
 		"ttl":         0,
 	}
 
-	return values, true, nil
+	return values, nil
 }
 
 func main() {

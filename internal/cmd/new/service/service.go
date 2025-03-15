@@ -52,12 +52,12 @@ func New(cfg *settings.Settings, options *InitOptions) error {
 
 	// Presents only questions from selected features
 	for _, name := range answers.Features {
-		defs, save, err := runFeatureSurvey(cfg, name)
+		featureName, defs, err := runFeatureSurvey(cfg, name)
 		if err != nil {
 			return err
 		}
 		if defs != nil {
-			answers.AddFeatureDefinitions(name, defs, save)
+			answers.AddFeatureDefinitions(featureName, defs)
 		}
 	}
 
@@ -197,12 +197,12 @@ func runServiceSurvey(cfg *settings.Settings, answers *initSurveyAnswers) (*clie
 		return nil, err
 	}
 
-	d, save, err := svc.ValidateAnswers(response)
+	d, err := svc.ValidateAnswers(response)
 	if err != nil {
 		return nil, err
 	}
 
-	answers.SetServiceDefinitions(d, save)
+	answers.SetServiceDefinitions(d)
 	return svc, nil
 }
 
@@ -440,34 +440,39 @@ func sanitizeResponse(response map[string]interface{}) map[string]interface{} {
 	return response
 }
 
-func runFeatureSurvey(cfg *settings.Settings, name string) (interface{}, bool, error) {
+func runFeatureSurvey(cfg *settings.Settings, name string) (string, interface{}, error) {
 	f, err := plugin.GetFeaturePlugin(cfg, name)
 	if err != nil {
-		return nil, false, err
+		return "", nil, err
 	}
 	if f == nil {
-		return nil, false, nil
+		return "", nil, nil
 	}
 
 	s, err := f.GetSurvey()
 	if err != nil {
-		return nil, false, err
+		return "", nil, err
 	}
 	if s == nil {
-		return nil, false, nil
+		return "", nil, nil
 	}
 
 	res, err := handleSurvey(name, s)
 	if err != nil {
-		return nil, false, err
+		return "", nil, err
 	}
 
-	defs, save, err := f.ValidateAnswers(res)
+	defs, err := f.ValidateAnswers(res)
 	if err != nil {
-		return nil, false, err
+		return "", nil, err
 	}
 
-	return defs, save, nil
+	featureName, err := f.GetName()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return featureName, defs, nil
 }
 
 func generateTemplates(options *InitOptions, answers *initSurveyAnswers, svc *client.Service) error {

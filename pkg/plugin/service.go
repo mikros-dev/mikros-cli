@@ -21,8 +21,8 @@ type ServiceApi interface {
 
 	// ValidateAnswers receives answers from the service survey to be validated
 	// inside. It should return the data that should be written into the
-	// 'service.toml' file and a flag indicating if it should be written or not.
-	ValidateAnswers(in map[string]interface{}) (map[string]interface{}, bool, error)
+	// 'service.toml' file.
+	ValidateAnswers(in map[string]interface{}) (map[string]interface{}, error)
 	Template() *template.Template
 }
 
@@ -69,12 +69,12 @@ func (s *Service) Run() error {
 			return err
 		}
 
-		data, save, err := s.api.ValidateAnswers(in)
+		data, err := s.api.ValidateAnswers(in)
 		if err != nil {
 			return err
 		}
 
-		encoder.SetAnswers(data, save)
+		encoder.SetAnswers(data)
 	case *tFlag:
 		encoder.SetTemplate(s.api.Template())
 	case *kFlag:
