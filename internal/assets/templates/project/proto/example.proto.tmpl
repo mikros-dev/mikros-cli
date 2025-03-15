@@ -5,7 +5,7 @@ syntax = "proto3";
 
 package {{.MainPackageName}}.example;
 
-option go_package = "github.com/your-org/{{.RepositoryName}}/gen/go/{{.MainPackageName}}/example;example";
+option go_package = "{{.VCSProjectPrefix}}/{{.RepositoryName}}/gen/go/{{.MainPackageName}}/example;example";
 
 service ExampleService {
   rpc GetExample(GetExampleRequest) returns(GetExampleResponse);

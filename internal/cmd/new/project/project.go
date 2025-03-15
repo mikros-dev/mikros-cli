@@ -14,17 +14,19 @@ import (
 	scripts_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/project/scripts"
 	"github.com/mikros-dev/mikros-cli/internal/golang"
 	"github.com/mikros-dev/mikros-cli/internal/path"
+	"github.com/mikros-dev/mikros-cli/internal/settings"
 	"github.com/mikros-dev/mikros-cli/internal/template"
 )
 
 type surveyAnswers struct {
 	RepositoryName string `survey:"repository_name"`
 	ProjectName    string `survey:"project_name"`
+	VcsPath        string `survey:"vcs_path"`
 }
 
-func New() error {
+func New(cfg *settings.Settings) error {
 	answers := &surveyAnswers{}
-	if err := survey.Ask(baseQuestions(), answers); err != nil {
+	if err := survey.Ask(baseQuestions(cfg), answers); err != nil {
 		return err
 	}
 
@@ -35,7 +37,7 @@ func New() error {
 	return nil
 }
 
-func baseQuestions() []*survey.Question {
+func baseQuestions(cfg *settings.Settings) []*survey.Question {
 	return []*survey.Question{
 		// Repository name
 		{
@@ -52,6 +54,14 @@ func baseQuestions() []*survey.Question {
 			Prompt: &survey.Input{
 				Message: "Project name. Enter your protobuf project name:",
 				Default: "services",
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "vcs_path",
+			Prompt: &survey.Input{
+				Message: "VCS path prefix. Enter your VCS path prefix to use for the project:",
+				Default: cfg.Project.Template.VcsPath,
 			},
 			Validate: survey.Required,
 		},
@@ -82,7 +92,7 @@ func generateProject(answers *surveyAnswers) error {
 	}
 
 	// Initialize go module for the new repository
-	if err := golang.ModInit(projectModuleName(answers.RepositoryName)); err != nil {
+	if err := golang.ModInit(projectModuleName(answers)); err != nil {
 		return err
 	}
 
@@ -111,14 +121,15 @@ func projectBasePath(repositoryName string) (string, error) {
 	return filepath.Join(cwd, strings.ToLower(strcase.ToKebab(repositoryName))), nil
 }
 
-func projectModuleName(repositoryName string) string {
-	return fmt.Sprintf("github.com/your-org/%s", strings.ToLower(strcase.ToKebab(repositoryName)))
+func projectModuleName(answers *surveyAnswers) string {
+	return fmt.Sprintf("%s/%s", answers.VcsPath, strings.ToLower(strcase.ToKebab(answers.RepositoryName)))
 }
 
 func createProjectTemplates(answer *surveyAnswers, repositoryPath string) error {
 	tplCtx := &TemplateContext{
-		MainPackageName: answer.ProjectName,
-		RepositoryName:  answer.RepositoryName,
+		MainPackageName:  answer.ProjectName,
+		RepositoryName:   answer.RepositoryName,
+		VCSProjectPrefix: answer.VcsPath,
 	}
 
 	if err := createProjectRootTemplates(tplCtx); err != nil {

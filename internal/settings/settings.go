@@ -15,12 +15,21 @@ const (
 )
 
 type Settings struct {
-	Paths Path `toml:"paths"`
+	Paths   Path    `toml:"paths"`
+	Project Project `toml:"project"`
 }
 
 type Path struct {
 	Services string `toml:"services" default:"$HOME/.mikros/plugins/services"`
 	Features string `toml:"features" default:"$HOME/.mikros/plugins/features"`
+}
+
+type Project struct {
+	Template Template `toml:"template"`
+}
+
+type Template struct {
+	VcsPath string `toml:"vcs_path"`
 }
 
 func New() (*Settings, error) {
