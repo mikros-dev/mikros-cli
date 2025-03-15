@@ -29,4 +29,4 @@ check: ## Execute all checks
 help: ## Show all available options
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: generate clean help setup go-check test-check update-plugins go-get mock-check check
+.PHONY: generate clean help setup go-check test-check go-get mock-check check
