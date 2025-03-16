@@ -37,7 +37,12 @@ func newSurveyAnswers(cfg *settings.Settings) *surveyAnswers {
 	return a
 }
 
-func New(cfg *settings.Settings) error {
+type NewOptions struct {
+	Path          string
+	ProtoFilename string
+}
+
+func New(cfg *settings.Settings, options *NewOptions) error {
 	answers, err := runSurvey(cfg)
 	if err != nil {
 		return err

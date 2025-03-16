@@ -26,13 +26,13 @@ import (
 	mtemplate "github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
-type InitOptions struct {
+type NewOptions struct {
 	Path          string
 	ProtoFilename string
 }
 
 // New creates a new service template directory with initial source files.
-func New(cfg *settings.Settings, options *InitOptions) error {
+func New(cfg *settings.Settings, options *NewOptions) error {
 	answers, err := runSurvey(cfg)
 	if err != nil {
 		return err
@@ -455,7 +455,7 @@ func runFeatureSurvey(cfg *settings.Settings, name string) (string, interface{},
 	return featureName, defs, nil
 }
 
-func generateTemplates(options *InitOptions, answers *surveyAnswers, svc *client.Service) error {
+func generateTemplates(options *NewOptions, answers *surveyAnswers, svc *client.Service) error {
 	var (
 		destinationPath = options.Path
 	)
@@ -534,7 +534,7 @@ func writeServiceDefinitions(path string, answers *surveyAnswers) error {
 	return nil
 }
 
-func generateSources(options *InitOptions, answers *surveyAnswers, svc *client.Service) error {
+func generateSources(options *NewOptions, answers *surveyAnswers, svc *client.Service) error {
 	var externalTemplate *mtemplate.Template
 	if svc != nil {
 		res, err := svc.GetTemplates()
@@ -556,7 +556,7 @@ func generateSources(options *InitOptions, answers *surveyAnswers, svc *client.S
 	return nil
 }
 
-func generateTemplateContext(options *InitOptions, answers *surveyAnswers, externalTemplate *mtemplate.Template) (TemplateContext, error) {
+func generateTemplateContext(options *NewOptions, answers *surveyAnswers, externalTemplate *mtemplate.Template) (TemplateContext, error) {
 	var (
 		svcDefs = answers.ServiceDefinitions()
 		defs    interface{}
