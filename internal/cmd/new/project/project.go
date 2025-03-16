@@ -38,8 +38,7 @@ func newSurveyAnswers(cfg *settings.Settings) *surveyAnswers {
 }
 
 type NewOptions struct {
-	Path          string
-	ProtoFilename string
+	Path string
 }
 
 func New(cfg *settings.Settings, options *NewOptions) error {
@@ -48,7 +47,7 @@ func New(cfg *settings.Settings, options *NewOptions) error {
 		return err
 	}
 
-	if err := generateProject(answers); err != nil {
+	if err := generateProject(options, answers); err != nil {
 		return err
 	}
 
@@ -83,8 +82,8 @@ func runSurvey(cfg *settings.Settings) (*surveyAnswers, error) {
 	return answers, nil
 }
 
-func generateProject(answers *surveyAnswers) error {
-	repositoryPath, err := createProjectDirectory(answers.RepositoryName)
+func generateProject(options *NewOptions, answers *surveyAnswers) error {
+	repositoryPath, err := createProjectDirectory(options, answers.RepositoryName)
 	if err != nil {
 		return err
 	}
@@ -114,8 +113,8 @@ func generateProject(answers *surveyAnswers) error {
 	return nil
 }
 
-func createProjectDirectory(repositoryName string) (string, error) {
-	p, err := projectBasePath(repositoryName)
+func createProjectDirectory(options *NewOptions, repositoryName string) (string, error) {
+	p, err := projectBasePath(options, repositoryName)
 	if err != nil {
 		return "", err
 	}
@@ -127,13 +126,21 @@ func createProjectDirectory(repositoryName string) (string, error) {
 	return p, nil
 }
 
-func projectBasePath(repositoryName string) (string, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
+func projectBasePath(options *NewOptions, repositoryName string) (string, error) {
+	var (
+		name = strings.ToLower(strcase.ToKebab(repositoryName))
+	)
+
+	if options.Path == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+
+		return filepath.Join(cwd, name), nil
 	}
 
-	return filepath.Join(cwd, strings.ToLower(strcase.ToKebab(repositoryName))), nil
+	return filepath.Join(options.Path, name), nil
 }
 
 func projectModuleName(answers *surveyAnswers) string {

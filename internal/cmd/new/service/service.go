@@ -457,7 +457,7 @@ func runFeatureSurvey(cfg *settings.Settings, name string) (string, interface{},
 
 func generateTemplates(options *NewOptions, answers *surveyAnswers, svc *client.Service) error {
 	var (
-		destinationPath = options.Path
+		destinationPath = filepath.Join(options.Path, strings.ToLower(answers.Name))
 	)
 
 	// Set the project base path
