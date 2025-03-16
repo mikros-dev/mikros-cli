@@ -1,0 +1,21 @@
+# This is a complete example of all available settings options for mikros CLI
+# configuration file.
+#
+# Remember that, this file should be created in your $HOME/.mikros/config.toml
+
+[ui]
+  # Sets the color theme to use in the UI. Supported values:
+  # base16, charm, dracula, catppuccin, default
+  theme = ""
+
+[paths]
+  # Sets the path to load services plugins
+  plugins.services = ""
+
+  # Sets the path to load feature plugins
+  plugins.features = ""
+
+[project]
+  # Sets the name of your VCS organization path to be used in generated project,
+  # like in the go.mod file.
+  template.vcs_path = ""

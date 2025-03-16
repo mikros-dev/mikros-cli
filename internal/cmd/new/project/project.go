@@ -6,7 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
+	"github.com/charmbracelet/huh"
+	"github.com/creasty/defaults"
 	"github.com/iancoleman/strcase"
 
 	proto_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/project/proto"
@@ -16,17 +17,29 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/path"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 	"github.com/mikros-dev/mikros-cli/internal/template"
+	"github.com/mikros-dev/mikros-cli/internal/ui"
 )
 
 type surveyAnswers struct {
-	RepositoryName string `survey:"repository_name"`
-	ProjectName    string `survey:"project_name"`
+	RepositoryName string `survey:"repository_name" default:"protobuf-workspace"`
+	ProjectName    string `survey:"project_name" default:"services"`
 	VcsPath        string `survey:"vcs_path"`
 }
 
+func newSurveyAnswers(cfg *settings.Settings) *surveyAnswers {
+	a := &surveyAnswers{}
+	if err := defaults.Set(a); err != nil {
+		// Without default values
+		return a
+	}
+
+	a.VcsPath = cfg.Project.Template.VcsPath
+	return a
+}
+
 func New(cfg *settings.Settings) error {
-	answers := &surveyAnswers{}
-	if err := survey.Ask(baseQuestions(cfg), answers); err != nil {
+	answers, err := runSurvey(cfg)
+	if err != nil {
 		return err
 	}
 
@@ -37,35 +50,32 @@ func New(cfg *settings.Settings) error {
 	return nil
 }
 
-func baseQuestions(cfg *settings.Settings) []*survey.Question {
-	return []*survey.Question{
-		// Repository name
-		{
-			Name: "repository_name",
-			Prompt: &survey.Input{
-				Message: "Repository name. Enter the name of the repository to create:",
-				Default: "protobuf-workspace",
-			},
-			Validate: survey.Required,
-		},
-		// Project name
-		{
-			Name: "project_name",
-			Prompt: &survey.Input{
-				Message: "Project name. Enter your protobuf project name:",
-				Default: "services",
-			},
-			Validate: survey.Required,
-		},
-		{
-			Name: "vcs_path",
-			Prompt: &survey.Input{
-				Message: "VCS path prefix. Enter your VCS path prefix to use for the project:",
-				Default: cfg.Project.Template.VcsPath,
-			},
-			Validate: survey.Required,
-		},
+func runSurvey(cfg *settings.Settings) (*surveyAnswers, error) {
+	answers := newSurveyAnswers(cfg)
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Repository name. Enter the name of the repository to create:").
+				Value(&answers.RepositoryName).
+				Validate(ui.IsEmpty("repository name cannot be empty")),
+
+			huh.NewInput().
+				Title("Project name. Enter your protobuf project name:").
+				Value(&answers.ProjectName).
+				Validate(ui.IsEmpty("project name cannot be empty")),
+
+			huh.NewInput().
+				Title("VCS path prefix. Enter your VCS path prefix to use for the project:").
+				Value(&answers.VcsPath).
+				Validate(ui.IsEmpty("VCS path prefix cannot be empty")),
+		),
+	)
+
+	if err := form.WithTheme(cfg.GetTheme()).Run(); err != nil {
+		return nil, err
 	}
+
+	return answers, nil
 }
 
 func generateProject(answers *surveyAnswers) error {

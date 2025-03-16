@@ -33,7 +33,7 @@ func (p *Plugin) Survey() *survey.Survey {
 				Message: "Select the database kind:",
 				Default: "mongo",
 				Options: []string{"mongo", "postgres", "mysql", "sqlserver", "sqlite"},
-				Prompt:  survey.PromptMultiSelect,
+				Prompt:  survey.PromptSelect,
 			},
 			{
 				Name:    "database_ttl",

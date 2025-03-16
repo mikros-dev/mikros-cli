@@ -9,8 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/go-playground/validator/v10"
+	"github.com/charmbracelet/huh"
 	"github.com/iancoleman/strcase"
 	"github.com/somatech1/mikros/components/definition"
 
@@ -24,7 +23,6 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 	"github.com/mikros-dev/mikros-cli/internal/template"
 	"github.com/mikros-dev/mikros-cli/internal/ui"
-	msurvey "github.com/mikros-dev/mikros-cli/pkg/survey"
 	mtemplate "github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
@@ -35,13 +33,8 @@ type InitOptions struct {
 
 // New creates a new service template directory with initial source files.
 func New(cfg *settings.Settings, options *InitOptions) error {
-	questions, err := baseQuestions(cfg)
+	answers, err := runSurvey(cfg)
 	if err != nil {
-		return err
-	}
-
-	answers := &initSurveyAnswers{}
-	if err := survey.Ask(questions, answers); err != nil {
 		return err
 	}
 
@@ -68,93 +61,74 @@ func New(cfg *settings.Settings, options *InitOptions) error {
 	return nil
 }
 
-func baseQuestions(cfg *settings.Settings) ([]*survey.Question, error) {
-	supportedTypes := []string{
-		definition.ServiceType_gRPC.String(),
-		definition.ServiceType_HTTP.String(),
-		definition.ServiceType_Native.String(),
-		definition.ServiceType_Script.String(),
-	}
+func runSurvey(cfg *settings.Settings) (*surveyAnswers, error) {
+	var (
+		answers        = newSurveyAnswers()
+		supportedTypes = []huh.Option[string]{
+			huh.NewOption(definition.ServiceType_gRPC.String(), definition.ServiceType_gRPC.String()),
+			huh.NewOption(definition.ServiceType_HTTP.String(), definition.ServiceType_HTTP.String()),
+			huh.NewOption(definition.ServiceType_Native.String(), definition.ServiceType_Native.String()),
+			huh.NewOption(definition.ServiceType_Script.String(), definition.ServiceType_Script.String()),
+		}
+	)
 
 	newTypes, err := plugin.GetNewServiceKinds(cfg)
 	if err != nil {
 		return nil, err
 	}
-	supportedTypes = append(supportedTypes, newTypes...)
+	for _, t := range newTypes {
+		supportedTypes = append(supportedTypes, huh.NewOption(t, t))
+	}
+	sort.Slice(supportedTypes, func(i, j int) bool {
+		return supportedTypes[i].String() < supportedTypes[j].String()
+	})
 
-	sort.Strings(supportedTypes)
-	questions := []*survey.Question{
-		// Service name
-		{
-			Name: "name",
-			Prompt: &survey.Input{
-				Message: "FileName. Can be a fully qualified service name (URL + name):",
-			},
-			Validate: survey.ComposeValidators(
-				survey.Required,
-				survey.MinLength(0),
-				survey.MaxLength(512),
-			),
-		},
-		// Service type
-		{
-			Name: "type",
-			Prompt: &survey.Select{
-				Message:  "Select the type of service:",
-				Options:  supportedTypes,
-				PageSize: len(supportedTypes),
-			},
-			Validate: survey.Required,
-		},
-		// Language
-		{
-			Name: "language",
-			Prompt: &survey.Select{
-				Message:  "Select the service main programming language:",
-				Options:  definition.SupportedLanguages(),
-				PageSize: len(definition.SupportedLanguages()),
-			},
-			Validate: survey.Required,
-		},
-		// Version
-		{
-			Name: "version",
-			Prompt: &survey.Input{
-				Message: "Version. A semver version string for the service, with 'v' as prefix (ex: v1.0.0):",
-				Default: "v0.1.0",
-			},
-			Validate: func(val interface{}) error {
-				if str, ok := val.(string); ok {
-					if !definition.ValidateVersion(str) {
-						return errors.New("invalid version format")
-					}
+	var languages []huh.Option[string]
+	for _, t := range definition.SupportedLanguages() {
+		languages = append(languages, huh.NewOption(t, t))
+	}
 
-					return nil
+	questions := []huh.Field{
+		huh.NewInput().
+			Title("Service name. Can be a fully qualified name (URL + name):").
+			Value(&answers.Name).
+			Validate(ui.IsEmpty("service name cannot be empty")),
+
+		huh.NewSelect[string]().
+			Title("Select the type of service:").
+			Options(supportedTypes...).
+			Value(&answers.Type).
+			Validate(ui.IsEmpty("service type cannot be empty")),
+
+		huh.NewSelect[string]().
+			Title("Select the service programming language:").
+			Options(languages...).
+			Value(&answers.Language).
+			Validate(ui.IsEmpty("service programming language cannot be empty")),
+
+		huh.NewInput().
+			Title("Version. A semver version string for the service, with 'v' as prefix (ex: v1.0.0):").
+			Value(&answers.Version).
+			Validate(func(s string) error {
+				if !definition.ValidateVersion(s) {
+					return errors.New("invalid version format")
 				}
 
-				return errors.New("version has an invalid value type")
-			},
-		},
-		// Product
-		{
-			Name: "product",
-			Prompt: &survey.Input{
-				Message: "Product name. Enter the product name that the service belongs to:",
-			},
-			Validate: survey.ComposeValidators(
-				survey.Required,
-				survey.MinLength(3),
-				survey.MaxLength(512),
-			),
-		},
-		// Lifecycle
-		{
-			Name: "lifecycle",
-			Prompt: &survey.MultiSelect{
-				Message: "Select lifecycle events to handle in the service:",
-				Options: []string{"OnStart", "OnFinish"},
-			},
-		},
+				return nil
+			}),
+
+		huh.NewInput().
+			Title("Product name. Enter the product name that the service belongs to:").
+			Value(&answers.Product).
+			Validate(ui.IsEmpty("product name cannot be empty")),
+
+		huh.NewMultiSelect[string]().
+			Title("Select lifecycle events to handle in the service:").
+			Options(
+				huh.NewOption("OnStart", "OnStart"),
+				huh.NewOption("OnFinish", "OnFinish"),
+			).
+			Value(&answers.Lifecycle),
 	}
 
 	featureNames, err := plugin.GetFeaturesUINames(cfg)
@@ -162,22 +136,28 @@ func baseQuestions(cfg *settings.Settings) ([]*survey.Question, error) {
 		return nil, err
 	}
 	if len(featureNames) > 0 {
-		// Features
-		questions = append(questions, &survey.Question{
-			Name: "features",
-			Prompt: &survey.MultiSelect{
-				Message:  "Select the features the service will have:",
-				Options:  featureNames,
-				PageSize: len(featureNames),
-			},
-		})
+		features := make([]huh.Option[string], len(featureNames))
+		for i, f := range featureNames {
+			features[i] = huh.NewOption(f, f)
+		}
+
+		questions = append(questions, huh.NewMultiSelect[string]().
+			Title("Select the features the service will have").
+			Options(features...).
+			Value(&answers.Features),
+		)
 	}
 
-	return questions, nil
+	form := huh.NewForm(huh.NewGroup(questions...))
+	if err := form.WithTheme(cfg.GetTheme()).Run(); err != nil {
+		return nil, err
+	}
+
+	return answers, nil
 }
 
 // runServiceSurvey executes the survey that a service may have implemented.
-func runServiceSurvey(cfg *settings.Settings, answers *initSurveyAnswers) (*client.Service, error) {
+func runServiceSurvey(cfg *settings.Settings, answers *surveyAnswers) (*client.Service, error) {
 	svc, err := plugin.GetServicePlugin(cfg, answers.Type)
 	if err != nil {
 		return nil, err
@@ -192,7 +172,7 @@ func runServiceSurvey(cfg *settings.Settings, answers *initSurveyAnswers) (*clie
 		return nil, err
 	}
 
-	response, err := handleSurvey(answers.Type, svcSurvey)
+	response, err := ui.RunFormFromSurvey(answers.Type, svcSurvey, cfg.GetTheme())
 	if err != nil {
 		return nil, err
 	}
@@ -206,239 +186,239 @@ func runServiceSurvey(cfg *settings.Settings, answers *initSurveyAnswers) (*clie
 	return svc, nil
 }
 
-func handleSurvey(name string, featureSurvey *msurvey.Survey) (map[string]interface{}, error) {
-	if featureSurvey.ConfirmQuestion != nil {
-		var responses []map[string]interface{}
-
-	loop:
-		for {
-			if !featureSurvey.ConfirmQuestion.ConfirmAfter {
-				res := ui.YesNo(featureSurvey.ConfirmQuestion.Message)
-				if !res {
-					break loop
-				}
-			}
-
-			response, err := surveyFromQuestion(name, featureSurvey)
-			if err != nil {
-				return nil, err
-			}
-			responses = append(responses, response)
-
-			if featureSurvey.ConfirmQuestion.ConfirmAfter {
-				res := ui.YesNo(featureSurvey.ConfirmQuestion.Message)
-				if !res {
-					break loop
-				}
-			}
-		}
-
-		return map[string]interface{}{
-			name: responses,
-		}, nil
-	}
-
-	response, err := surveyFromQuestion(name, featureSurvey)
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
-}
-
-func surveyFromQuestion(name string, entrySurvey *msurvey.Survey) (map[string]interface{}, error) {
-	var (
-		s        []*survey.Question
-		response = make(map[string]interface{})
-		validate = validator.New()
-	)
-
-	for _, q := range entrySurvey.Questions {
-		if err := validate.Struct(q); err != nil {
-			return nil, err
-		}
-
-		question := &survey.Question{
-			Name: q.Name,
-			Validate: func() func(v interface{}) error {
-				//if q.Validate != nil {
-				//	return q.Validate
-				//}
-
-				if q.Required {
-					return survey.Required
-				}
-
-				return nil
-			}(),
-		}
-
-		switch q.Prompt {
-		case msurvey.PromptSurvey:
-			if !validateInnerSurveyCondition(response, q.Condition) {
-				continue
-			}
-
-			r, err := handleSurvey(q.Name, q.Survey)
-			if err != nil {
-				return nil, err
-			}
-			if r != nil {
-				r = sanitizeResponse(r)
-				response[q.Name] = r[q.Name]
-			}
-
-			continue
-
-		default:
-			question.Prompt = buildSurveyPrompt(name, q)
-		}
-
-		if q.Prompt != msurvey.PromptSurvey {
-			s = append(s, question)
-		}
-
-		if entrySurvey.AskOne {
-			if validateInnerSurveyCondition(response, q.Condition) {
-				r, err := askOne(question.Prompt, q)
-				if err != nil {
-					return nil, err
-				}
-
-				response[question.Name] = r
-				response = sanitizeResponse(response)
-			}
-		}
-	}
-
-	// If we don't have response we need to execute the survey entirely.
-	if len(response) == 0 {
-		if err := survey.Ask(s, &response); err != nil {
-			return nil, err
-		}
-	}
-
-	return sanitizeResponse(response), nil
-}
-
-func buildSurveyPrompt(name string, q *msurvey.Question) survey.Prompt {
-	switch q.Prompt {
-	case msurvey.PromptInput:
-		return &survey.Input{
-			Message: fmt.Sprintf("[%s] %s", name, q.Message),
-			Default: q.Default,
-		}
-
-	case msurvey.PromptSelect:
-		return &survey.Select{
-			Message:  fmt.Sprintf("[%s] %s", name, q.Message),
-			Options:  q.Options,
-			PageSize: len(q.Options),
-			Default:  q.Default,
-		}
-
-	case msurvey.PromptMultiSelect:
-		return &survey.MultiSelect{
-			Message: fmt.Sprintf("[%s] %s", name, q.Message),
-			Options: q.Options,
-		}
-
-	case msurvey.PromptMultiline:
-		return &survey.Multiline{
-			Message: fmt.Sprintf("[%s] %s", name, q.Message),
-		}
-
-	case msurvey.PromptConfirm:
-		return &survey.Confirm{
-			Message: fmt.Sprintf("[%s] %s", name, q.Message),
-		}
-
-	default:
-	}
-
-	return nil
-}
-
-func validateInnerSurveyCondition(response map[string]interface{}, condition *msurvey.QuestionCondition) bool {
-	if condition != nil {
-		if r, ok := response[condition.Name]; ok {
-			switch value := condition.Value.(type) {
-			case []string:
-				if slices.Contains(value, r.(string)) {
-					return true
-				}
-
-			case string:
-				if v, ok := r.(string); ok && v == value {
-					return true
-				}
-			}
-		}
-
-		return false
-	}
-
-	return true
-}
-
-func askOne(prompt survey.Prompt, question *msurvey.Question) (interface{}, error) {
-	getOptions := func() survey.AskOpt {
-		//if question.Validate != nil {
-		//	return survey.WithValidator(question.Validate)
-		//}
-		if question.Required {
-			return survey.WithValidator(survey.Required)
-		}
-
-		return nil
-	}
-
-	if question.Prompt == msurvey.PromptSelect {
-		index := 0
-		if err := survey.AskOne(prompt, &index, getOptions()); err != nil {
-			return nil, err
-		}
-
-		return question.Options[index], nil
-	}
-
-	if question.Prompt == msurvey.PromptMultiSelect {
-		var r []string
-		if err := survey.AskOne(prompt, &r, getOptions()); err != nil {
-			return nil, err
-		}
-
-		return r, nil
-	}
-
-	var r string
-	if err := survey.AskOne(prompt, &r, getOptions()); err != nil {
-		return nil, err
-	}
-
-	return r, nil
-}
-
-// sanitizeResponse sanitizes the response to avoid sending internal formats to
-// the client.
-func sanitizeResponse(response map[string]interface{}) map[string]interface{} {
-	for k, v := range response {
-		if s, ok := v.(survey.OptionAnswer); ok {
-			response[k] = s.Value
-		}
-
-		if opts, ok := v.([]survey.OptionAnswer); ok {
-			var s []string
-			for _, o := range opts {
-				s = append(s, o.Value)
-			}
-
-			response[k] = s
-		}
-	}
-
-	return response
-}
+//func handleSurvey(name string, featureSurvey *msurvey.Survey) (map[string]interface{}, error) {
+//	if featureSurvey.ConfirmQuestion != nil {
+//		var responses []map[string]interface{}
+//
+//	loop:
+//		for {
+//			if !featureSurvey.ConfirmQuestion.ConfirmAfter {
+//				res := ui.YesNo(featureSurvey.ConfirmQuestion.Message)
+//				if !res {
+//					break loop
+//				}
+//			}
+//
+//			response, err := surveyFromQuestion(name, featureSurvey)
+//			if err != nil {
+//				return nil, err
+//			}
+//			responses = append(responses, response)
+//
+//			if featureSurvey.ConfirmQuestion.ConfirmAfter {
+//				res := ui.YesNo(featureSurvey.ConfirmQuestion.Message)
+//				if !res {
+//					break loop
+//				}
+//			}
+//		}
+//
+//		return map[string]interface{}{
+//			name: responses,
+//		}, nil
+//	}
+//
+//	response, err := surveyFromQuestion(name, featureSurvey)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return response, nil
+//}
+//
+//func surveyFromQuestion(name string, entrySurvey *msurvey.Survey) (map[string]interface{}, error) {
+//	var (
+//		s        []*survey.Question
+//		response = make(map[string]interface{})
+//		validate = validator.New()
+//	)
+//
+//	for _, q := range entrySurvey.Questions {
+//		if err := validate.Struct(q); err != nil {
+//			return nil, err
+//		}
+//
+//		question := &survey.Question{
+//			Name: q.Name,
+//			Validate: func() func(v interface{}) error {
+//				//if q.Validate != nil {
+//				//	return q.Validate
+//				//}
+//
+//				if q.Required {
+//					return survey.Required
+//				}
+//
+//				return nil
+//			}(),
+//		}
+//
+//		switch q.Prompt {
+//		case msurvey.PromptSurvey:
+//			if !validateInnerSurveyCondition(response, q.Condition) {
+//				continue
+//			}
+//
+//			r, err := handleSurvey(q.Name, q.Survey)
+//			if err != nil {
+//				return nil, err
+//			}
+//			if r != nil {
+//				r = sanitizeResponse(r)
+//				response[q.Name] = r[q.Name]
+//			}
+//
+//			continue
+//
+//		default:
+//			question.Prompt = buildSurveyPrompt(name, q)
+//		}
+//
+//		if q.Prompt != msurvey.PromptSurvey {
+//			s = append(s, question)
+//		}
+//
+//		if entrySurvey.AskOne {
+//			if validateInnerSurveyCondition(response, q.Condition) {
+//				r, err := askOne(question.Prompt, q)
+//				if err != nil {
+//					return nil, err
+//				}
+//
+//				response[question.Name] = r
+//				response = sanitizeResponse(response)
+//			}
+//		}
+//	}
+//
+//	// If we don't have response we need to execute the survey entirely.
+//	if len(response) == 0 {
+//		if err := survey.Ask(s, &response); err != nil {
+//			return nil, err
+//		}
+//	}
+//
+//	return sanitizeResponse(response), nil
+//}
+//
+//func buildSurveyPrompt(name string, q *msurvey.Question) survey.Prompt {
+//	switch q.Prompt {
+//	case msurvey.PromptInput:
+//		return &survey.Input{
+//			Message: fmt.Sprintf("[%s] %s", name, q.Message),
+//			Default: q.Default,
+//		}
+//
+//	case msurvey.PromptSelect:
+//		return &survey.Select{
+//			Message:  fmt.Sprintf("[%s] %s", name, q.Message),
+//			Options:  q.Options,
+//			PageSize: len(q.Options),
+//			Default:  q.Default,
+//		}
+//
+//	case msurvey.PromptMultiSelect:
+//		return &survey.MultiSelect{
+//			Message: fmt.Sprintf("[%s] %s", name, q.Message),
+//			Options: q.Options,
+//		}
+//
+//	case msurvey.PromptMultiline:
+//		return &survey.Multiline{
+//			Message: fmt.Sprintf("[%s] %s", name, q.Message),
+//		}
+//
+//	case msurvey.PromptConfirm:
+//		return &survey.Confirm{
+//			Message: fmt.Sprintf("[%s] %s", name, q.Message),
+//		}
+//
+//	default:
+//	}
+//
+//	return nil
+//}
+//
+//func validateInnerSurveyCondition(response map[string]interface{}, condition *msurvey.QuestionCondition) bool {
+//	if condition != nil {
+//		if r, ok := response[condition.Name]; ok {
+//			switch value := condition.Value.(type) {
+//			case []string:
+//				if slices.Contains(value, r.(string)) {
+//					return true
+//				}
+//
+//			case string:
+//				if v, ok := r.(string); ok && v == value {
+//					return true
+//				}
+//			}
+//		}
+//
+//		return false
+//	}
+//
+//	return true
+//}
+//
+//func askOne(prompt survey.Prompt, question *msurvey.Question) (interface{}, error) {
+//	getOptions := func() survey.AskOpt {
+//		//if question.Validate != nil {
+//		//	return survey.WithValidator(question.Validate)
+//		//}
+//		if question.Required {
+//			return survey.WithValidator(survey.Required)
+//		}
+//
+//		return nil
+//	}
+//
+//	if question.Prompt == msurvey.PromptSelect {
+//		index := 0
+//		if err := survey.AskOne(prompt, &index, getOptions()); err != nil {
+//			return nil, err
+//		}
+//
+//		return question.Options[index], nil
+//	}
+//
+//	if question.Prompt == msurvey.PromptMultiSelect {
+//		var r []string
+//		if err := survey.AskOne(prompt, &r, getOptions()); err != nil {
+//			return nil, err
+//		}
+//
+//		return r, nil
+//	}
+//
+//	var r string
+//	if err := survey.AskOne(prompt, &r, getOptions()); err != nil {
+//		return nil, err
+//	}
+//
+//	return r, nil
+//}
+//
+//// sanitizeResponse sanitizes the response to avoid sending internal formats to
+//// the client.
+//func sanitizeResponse(response map[string]interface{}) map[string]interface{} {
+//	for k, v := range response {
+//		if s, ok := v.(survey.OptionAnswer); ok {
+//			response[k] = s.Value
+//		}
+//
+//		if opts, ok := v.([]survey.OptionAnswer); ok {
+//			var s []string
+//			for _, o := range opts {
+//				s = append(s, o.Value)
+//			}
+//
+//			response[k] = s
+//		}
+//	}
+//
+//	return response
+//}
 
 func runFeatureSurvey(cfg *settings.Settings, name string) (string, interface{}, error) {
 	f, err := plugin.GetFeaturePlugin(cfg, name)
@@ -457,7 +437,7 @@ func runFeatureSurvey(cfg *settings.Settings, name string) (string, interface{},
 		return "", nil, nil
 	}
 
-	res, err := handleSurvey(name, s)
+	res, err := ui.RunFormFromSurvey(name, s, cfg.GetTheme())
 	if err != nil {
 		return "", nil, err
 	}
@@ -475,7 +455,7 @@ func runFeatureSurvey(cfg *settings.Settings, name string) (string, interface{},
 	return featureName, defs, nil
 }
 
-func generateTemplates(options *InitOptions, answers *initSurveyAnswers, svc *client.Service) error {
+func generateTemplates(options *InitOptions, answers *surveyAnswers, svc *client.Service) error {
 	var (
 		destinationPath = options.Path
 	)
@@ -524,7 +504,7 @@ func generateTemplates(options *InitOptions, answers *initSurveyAnswers, svc *cl
 	return nil
 }
 
-func writeServiceDefinitions(path string, answers *initSurveyAnswers) error {
+func writeServiceDefinitions(path string, answers *surveyAnswers) error {
 	defs := &definition.Definitions{
 		Name:     answers.Name,
 		Types:    []string{answers.Type},
@@ -554,7 +534,7 @@ func writeServiceDefinitions(path string, answers *initSurveyAnswers) error {
 	return nil
 }
 
-func generateSources(options *InitOptions, answers *initSurveyAnswers, svc *client.Service) error {
+func generateSources(options *InitOptions, answers *surveyAnswers, svc *client.Service) error {
 	var externalTemplate *mtemplate.Template
 	if svc != nil {
 		res, err := svc.GetTemplates()
@@ -576,7 +556,7 @@ func generateSources(options *InitOptions, answers *initSurveyAnswers, svc *clie
 	return nil
 }
 
-func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers, externalTemplate *mtemplate.Template) (TemplateContext, error) {
+func generateTemplateContext(options *InitOptions, answers *surveyAnswers, externalTemplate *mtemplate.Template) (TemplateContext, error) {
 	var (
 		svcDefs = answers.ServiceDefinitions()
 		defs    interface{}
@@ -631,7 +611,7 @@ func generateTemplateContext(options *InitOptions, answers *initSurveyAnswers, e
 	return tplCtx, nil
 }
 
-func generateNewServiceArgs(answers *initSurveyAnswers, externalTemplate *mtemplate.Template) (string, error) {
+func generateNewServiceArgs(answers *surveyAnswers, externalTemplate *mtemplate.Template) (string, error) {
 	svcSnake := strcase.ToSnake(answers.Name)
 
 	switch answers.Type {
@@ -694,7 +674,7 @@ func generateNewServiceArgs(answers *initSurveyAnswers, externalTemplate *mtempl
 	return "", nil
 }
 
-func generateImports(answers *initSurveyAnswers) map[string][]ImportContext {
+func generateImports(answers *surveyAnswers) map[string][]ImportContext {
 	imports := map[string][]ImportContext{
 		"main": {
 			{

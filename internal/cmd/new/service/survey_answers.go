@@ -1,14 +1,16 @@
 package service
 
 import (
+	"github.com/creasty/defaults"
+
 	"github.com/mikros-dev/mikros-cli/internal/template"
 )
 
-type initSurveyAnswers struct {
+type surveyAnswers struct {
 	Name      string
 	Type      string
 	Language  string
-	Version   string
+	Version   string `default:"v0.1.0"`
 	Product   string
 	Features  []string
 	Lifecycle []string
@@ -17,7 +19,17 @@ type initSurveyAnswers struct {
 	serviceDefinitions *surveyAnswersDefinitions
 }
 
-func (i *initSurveyAnswers) TemplateNames() []template.File {
+func newSurveyAnswers() *surveyAnswers {
+	a := &surveyAnswers{}
+	if err := defaults.Set(a); err != nil {
+		// Without default values
+		return a
+	}
+
+	return a
+}
+
+func (i *surveyAnswers) TemplateNames() []template.File {
 	names := []template.File{
 		{
 			Name:      "main",
@@ -39,7 +51,7 @@ func (i *initSurveyAnswers) TemplateNames() []template.File {
 	return names
 }
 
-func (i *initSurveyAnswers) AddFeatureDefinitions(name string, answers interface{}) {
+func (i *surveyAnswers) AddFeatureDefinitions(name string, answers interface{}) {
 	if i.featureDefinitions == nil {
 		i.featureDefinitions = make(map[string]*surveyAnswersDefinitions)
 	}
@@ -49,17 +61,17 @@ func (i *initSurveyAnswers) AddFeatureDefinitions(name string, answers interface
 	}
 }
 
-func (i *initSurveyAnswers) SetServiceDefinitions(answers interface{}) {
+func (i *surveyAnswers) SetServiceDefinitions(answers interface{}) {
 	i.serviceDefinitions = &surveyAnswersDefinitions{
 		definitions: answers,
 	}
 }
 
-func (i *initSurveyAnswers) ServiceDefinitions() *surveyAnswersDefinitions {
+func (i *surveyAnswers) ServiceDefinitions() *surveyAnswersDefinitions {
 	return i.serviceDefinitions
 }
 
-func (i *initSurveyAnswers) FeatureDefinitions() map[string]*surveyAnswersDefinitions {
+func (i *surveyAnswers) FeatureDefinitions() map[string]*surveyAnswersDefinitions {
 	return i.featureDefinitions
 }
 

@@ -3,8 +3,10 @@ package settings
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/charmbracelet/huh"
 	"github.com/creasty/defaults"
 
 	"github.com/mikros-dev/mikros-cli/internal/path"
@@ -17,6 +19,7 @@ const (
 type Settings struct {
 	Paths   Path    `toml:"paths"`
 	Project Project `toml:"project"`
+	UI      UI      `toml:"ui"`
 }
 
 type Path struct {
@@ -34,6 +37,10 @@ type Project struct {
 
 type Template struct {
 	VcsPath string `toml:"vcs_path"`
+}
+
+type UI struct {
+	Theme string `toml:"theme"`
 }
 
 func New() (*Settings, error) {
@@ -91,4 +98,19 @@ func (s *Settings) Write() error {
 	}
 
 	return nil
+}
+
+func (s *Settings) GetTheme() *huh.Theme {
+	switch strings.ToLower(s.UI.Theme) {
+	case "charm":
+		return huh.ThemeCharm()
+	case "dracula":
+		return huh.ThemeDracula()
+	case "catppuccin":
+		return huh.ThemeCatppuccin()
+	case "base16":
+		return huh.ThemeBase16()
+	}
+
+	return huh.ThemeBase()
 }

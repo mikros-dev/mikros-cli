@@ -3,7 +3,7 @@ package survey
 // Survey is a structure that a client uses to tell mikros CLI how to present
 // its survey for the user to answer questions.
 type Survey struct {
-	// AskOne when true sets that the survey will be executed each question
+	// AskOne when true sets that the survey will execute each question
 	// separately.
 	AskOne bool `json:"ask_one"`
 
