@@ -98,6 +98,9 @@ func (f *Feature) ValidateAnswers(answers map[string]interface{}) (map[string]in
 	if err != nil {
 		return nil, err
 	}
+	if len(d.Answers) == 0 {
+		return nil, nil
+	}
 
 	return d.Answers, nil
 }

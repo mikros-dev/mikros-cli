@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/charmbracelet/huh"
@@ -24,7 +25,7 @@ func runFormWithConfirmation(name string, s *survey.Survey, theme *huh.Theme) (m
 loop:
 	for {
 		if SurveyConfirmBefore(s) {
-			confirm, err := yesNo(s.ConfirmQuestion.Message)
+			confirm, err := yesNo(s.ConfirmQuestion.Message, s.ConfirmQuestion.Default)
 			if err != nil {
 				return nil, err
 			}
@@ -40,7 +41,7 @@ loop:
 		results = append(results, response)
 
 		if SurveyConfirmAfter(s) {
-			confirm, err := yesNo(s.ConfirmQuestion.Message)
+			confirm, err := yesNo(s.ConfirmQuestion.Message, s.ConfirmQuestion.Default)
 			if err != nil {
 				return nil, err
 			}
@@ -68,17 +69,6 @@ func runFormSurvey(name string, s *survey.Survey, theme *huh.Theme) (map[string]
 		)
 
 		switch q.Prompt {
-		case survey.PromptSurvey:
-			res, err := RunFormFromSurvey(name, q.Survey, theme)
-			if err != nil {
-				return nil, err
-			}
-			if res != nil {
-				results[q.Name] = res[q.Name]
-			}
-
-			continue
-
 		case survey.PromptInput:
 			defaultValue := q.Default
 			values[q.Name] = &defaultValue
@@ -95,7 +85,7 @@ func runFormSurvey(name string, s *survey.Survey, theme *huh.Theme) (map[string]
 			for i, option := range q.Options {
 				opt := huh.NewOption(option, option)
 				if option == q.Default {
-					opt.Selected(true)
+					opt = opt.Selected(true)
 				}
 				options[i] = opt
 			}
@@ -166,11 +156,86 @@ func runFormSurvey(name string, s *survey.Survey, theme *huh.Theme) (map[string]
 		}
 	}
 
+	// Check if we have a follow-up survey to execute
+	if len(s.FollowUp) != 0 {
+		followUpResults, err := executeFollowUpSurvey(s.FollowUp, results, theme)
+		if err != nil {
+			return nil, err
+		}
+		results["follow-up"] = followUpResults
+	}
+
 	return results, nil
 }
 
-func yesNo(message string) (bool, error) {
-	var confirm bool
+func executeFollowUpSurvey(surveys []*survey.FollowUpSurvey, previousResults map[string]interface{}, theme *huh.Theme) (map[string]map[string]interface{}, error) {
+	results := make(map[string]map[string]interface{})
+
+	for _, s := range surveys {
+		// Check if condition is met
+		ok, err := checkFollowUpSurveyCondition(s, previousResults)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			r, err := RunFormFromSurvey(s.Name, s.Survey, theme)
+			if err != nil {
+				return nil, err
+			}
+
+			results[s.Name] = r
+			continue
+		}
+	}
+
+	return results, nil
+}
+
+func checkFollowUpSurveyCondition(s *survey.FollowUpSurvey, previousResults map[string]interface{}) (bool, error) {
+	switch v := s.Condition.Value.(type) {
+	case string:
+		result, ok := previousResults[s.Condition.Name]
+		if !ok {
+			return false, nil
+		}
+
+		resultValue, ok := result.(string)
+		if !ok {
+			return false, errors.New("invalid result value type found")
+		}
+
+		return resultValue == v, nil
+
+	case []interface{}:
+		result, ok := previousResults[s.Condition.Name]
+		if !ok {
+			return false, nil
+		}
+
+		resultValue, ok := result.(string)
+		if !ok {
+			return false, errors.New("invalid result value type found")
+		}
+
+		values := make([]string, len(v))
+		for i, item := range v {
+			values[i] = item.(string)
+		}
+
+		return slices.Contains(values, resultValue), nil
+	}
+
+	return false, nil
+}
+
+func yesNo(message, defaultValue string) (bool, error) {
+	confirm := false
+	if defaultValue != "" {
+		if b, err := strconv.ParseBool(defaultValue); err == nil {
+			confirm = b
+		}
+	}
+
 	f := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().
