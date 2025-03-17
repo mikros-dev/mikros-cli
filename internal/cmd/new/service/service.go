@@ -148,8 +148,11 @@ func runSurvey(cfg *settings.Settings) (*surveyAnswers, error) {
 		)
 	}
 
-	form := huh.NewForm(huh.NewGroup(questions...))
-	if err := form.WithTheme(cfg.GetTheme()).Run(); err != nil {
+	form := huh.NewForm(huh.NewGroup(questions...)).
+		WithTheme(cfg.GetTheme()).
+		WithAccessible(cfg.UI.Accessible)
+
+	if err := form.Run(); err != nil {
 		return nil, err
 	}
 
@@ -172,7 +175,10 @@ func runServiceSurvey(cfg *settings.Settings, answers *surveyAnswers) (*client.S
 		return nil, err
 	}
 
-	response, err := ui.RunFormFromSurvey(answers.Type, svcSurvey, cfg.GetTheme())
+	response, err := ui.RunFormFromSurvey(answers.Type, svcSurvey, &ui.FormOptions{
+		Theme:      cfg.GetTheme(),
+		Accessible: cfg.UI.Accessible,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +209,10 @@ func runFeatureSurvey(cfg *settings.Settings, name string) (string, interface{},
 		return "", nil, nil
 	}
 
-	res, err := ui.RunFormFromSurvey(name, s, cfg.GetTheme())
+	res, err := ui.RunFormFromSurvey(name, s, &ui.FormOptions{
+		Theme:      cfg.GetTheme(),
+		Accessible: cfg.UI.Accessible,
+	})
 	if err != nil {
 		return "", nil, err
 	}

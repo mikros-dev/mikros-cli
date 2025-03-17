@@ -40,7 +40,8 @@ type Template struct {
 }
 
 type UI struct {
-	Theme string `toml:"theme"`
+	Theme      string `toml:"theme"`
+	Accessible bool   `toml:"accessible"`
 }
 
 func New() (*Settings, error) {

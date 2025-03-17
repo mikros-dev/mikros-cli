@@ -73,9 +73,11 @@ func runSurvey(cfg *settings.Settings) (*surveyAnswers, error) {
 				Value(&answers.VcsPath).
 				Validate(ui.IsEmpty("VCS path prefix cannot be empty")),
 		),
-	)
+	).
+		WithAccessible(cfg.UI.Accessible).
+		WithTheme(cfg.GetTheme())
 
-	if err := form.WithTheme(cfg.GetTheme()).Run(); err != nil {
+	if err := form.Run(); err != nil {
 		return nil, err
 	}
 

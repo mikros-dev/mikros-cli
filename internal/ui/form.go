@@ -11,15 +11,20 @@ import (
 	"github.com/mikros-dev/mikros-cli/pkg/survey"
 )
 
-func RunFormFromSurvey(name string, s *survey.Survey, theme *huh.Theme) (map[string]interface{}, error) {
-	if SurveyNeedsConfirmation(s) {
-		return runFormWithConfirmation(name, s, theme)
-	}
-
-	return runFormSurvey(name, s, theme)
+type FormOptions struct {
+	Theme      *huh.Theme
+	Accessible bool
 }
 
-func runFormWithConfirmation(name string, s *survey.Survey, theme *huh.Theme) (map[string]interface{}, error) {
+func RunFormFromSurvey(name string, s *survey.Survey, options *FormOptions) (map[string]interface{}, error) {
+	if SurveyNeedsConfirmation(s) {
+		return runFormWithConfirmation(name, s, options)
+	}
+
+	return runFormSurvey(name, s, options)
+}
+
+func runFormWithConfirmation(name string, s *survey.Survey, options *FormOptions) (map[string]interface{}, error) {
 	var results []map[string]interface{}
 
 loop:
@@ -34,7 +39,7 @@ loop:
 			}
 		}
 
-		response, err := runFormSurvey(name, s, theme)
+		response, err := runFormSurvey(name, s, options)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +61,7 @@ loop:
 	}, nil
 }
 
-func runFormSurvey(name string, s *survey.Survey, theme *huh.Theme) (map[string]interface{}, error) {
+func runFormSurvey(name string, s *survey.Survey, options *FormOptions) (map[string]interface{}, error) {
 	var (
 		values   = make(map[string]interface{})
 		results  = make(map[string]interface{})
@@ -140,8 +145,11 @@ func runFormSurvey(name string, s *survey.Survey, theme *huh.Theme) (map[string]
 		}
 	}
 
-	form := huh.NewForm(huh.NewGroup(elements...))
-	if err := form.WithTheme(theme).Run(); err != nil {
+	form := huh.NewForm(huh.NewGroup(elements...)).
+		WithTheme(options.Theme).
+		WithAccessible(options.Accessible)
+
+	if err := form.Run(); err != nil {
 		return nil, err
 	}
 
@@ -158,7 +166,7 @@ func runFormSurvey(name string, s *survey.Survey, theme *huh.Theme) (map[string]
 
 	// Check if we have a follow-up survey to execute
 	if len(s.FollowUp) != 0 {
-		followUpResults, err := executeFollowUpSurvey(s.FollowUp, results, theme)
+		followUpResults, err := executeFollowUpSurvey(s.FollowUp, results, options)
 		if err != nil {
 			return nil, err
 		}
@@ -168,7 +176,7 @@ func runFormSurvey(name string, s *survey.Survey, theme *huh.Theme) (map[string]
 	return results, nil
 }
 
-func executeFollowUpSurvey(surveys []*survey.FollowUpSurvey, previousResults map[string]interface{}, theme *huh.Theme) (map[string]map[string]interface{}, error) {
+func executeFollowUpSurvey(surveys []*survey.FollowUpSurvey, previousResults map[string]interface{}, options *FormOptions) (map[string]map[string]interface{}, error) {
 	results := make(map[string]map[string]interface{})
 
 	for _, s := range surveys {
@@ -178,7 +186,7 @@ func executeFollowUpSurvey(surveys []*survey.FollowUpSurvey, previousResults map
 			return nil, err
 		}
 		if ok {
-			r, err := RunFormFromSurvey(s.Name, s.Survey, theme)
+			r, err := RunFormFromSurvey(s.Name, s.Survey, options)
 			if err != nil {
 				return nil, err
 			}

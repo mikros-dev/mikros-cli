@@ -8,6 +8,9 @@
   # base16, charm, dracula, catppuccin, default
   theme = ""
 
+  # Turn on/off accessibility mode
+  accessible = "boolean"
+
 [paths]
   # Sets the path to load services plugins
   plugins.services = ""

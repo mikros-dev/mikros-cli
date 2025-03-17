@@ -86,9 +86,11 @@ func runNewProjectForm(cfg *settings.Settings) (string, error) {
 				).
 				Value(&selectedProject),
 		),
-	)
+	).
+		WithAccessible(cfg.UI.Accessible).
+		WithTheme(cfg.GetTheme())
 
-	if err := form.WithTheme(cfg.GetTheme()).Run(); err != nil {
+	if err := form.Run(); err != nil {
 		return "", err
 	}
 
