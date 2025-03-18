@@ -69,7 +69,7 @@ func writeServiceDefinitions(filename, name string, defs interface{}) error {
 	}
 	defer func() { _ = file.Close() }()
 
-	line := fmt.Sprintf("\n[%v]\n", name)
+	line := fmt.Sprintf("\n[services.%v]\n", name)
 	if _, err := file.WriteString(line); err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ func GetNewServiceKinds(cfg *settings.Settings) ([]string, error) {
 	}
 
 	for _, file := range files {
-		if !path.IsExecutable(file.Name()) {
+		if !path.IsExecutable(filepath.Join(basePath, file.Name())) {
 			continue
 		}
 
@@ -88,7 +88,7 @@ func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, err
 	}
 
 	for _, file := range files {
-		if !path.IsExecutable(file.Name()) {
+		if !path.IsExecutable(filepath.Join(basePath, file.Name())) {
 			continue
 		}
 

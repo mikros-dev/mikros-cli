@@ -60,7 +60,7 @@ func (s *Service) Run() error {
 	case *sFlag:
 		encoder.SetSurvey(s.api.Survey())
 	case *vFlag:
-		if *input != "" {
+		if *input == "" {
 			return errors.New("invalid input")
 		}
 

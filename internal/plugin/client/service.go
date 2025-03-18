@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os/exec"
 	"path/filepath"
 
@@ -28,7 +29,14 @@ func (s *Service) exec(args ...string) (string, error) {
 	cmd.Stdout = &out
 
 	if err := cmd.Run(); err != nil {
-		return "", err
+		// Error here must be decoded from stdout
+		d, err := data.DecodePluginData(out.String())
+		if err != nil {
+			// Nothing to do here, not our error
+			return "", err
+		}
+
+		return "", errors.New(d.Error)
 	}
 
 	return out.String(), nil
@@ -76,6 +84,9 @@ func (s *Service) ValidateAnswers(answers map[string]interface{}) (map[string]in
 	d, err := data.DecodePluginData(out)
 	if err != nil {
 		return nil, err
+	}
+	if len(d.Answers) == 0 {
+		return nil, nil
 	}
 
 	return d.Answers, nil
