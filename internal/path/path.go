@@ -78,3 +78,8 @@ func IsExecutable(path string) bool {
 
 	return false
 }
+
+// SetExecutablePath sets the path as executable.
+func SetExecutablePath(path string) error {
+	return os.Chmod(path, os.ModePerm)
+}

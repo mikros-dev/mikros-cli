@@ -240,6 +240,12 @@ func createProjectScriptsTemplates(repositoryPath string, tplCtx *TemplateContex
 		return err
 	}
 
+	for _, file := range templates {
+		if err := path.SetExecutablePath(filepath.Join(scriptsPath, file.Name)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
