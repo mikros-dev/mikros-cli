@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -51,6 +52,12 @@ func newCmdInit(cfg *settings.Settings) {
 			fmt.Println("In order to start, execute the following command inside the new project directory:")
 			fmt.Printf("\n$ make setup\n\n")
 
+		case "protobuf-module":
+			if err := protobuf.New(); err != nil {
+				fmt.Println("new:", err)
+				return
+			}
+
 		case "service-template":
 			options := &service.NewOptions{
 				Path:          viper.GetString("project-path"),
@@ -81,6 +88,7 @@ func runNewProjectForm(cfg *settings.Settings) (string, error) {
 				Title("Select a project to create or Quit to exit the application").
 				Options(
 					huh.NewOption("Protobuf monorepo", "protobuf-monorepo"),
+					huh.NewOption("Protobuf module file(s)", "protobuf-module"),
 					huh.NewOption("Single service template", "service-template"),
 					huh.NewOption("Quit", "quit"),
 				).
