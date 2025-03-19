@@ -92,8 +92,13 @@ func (s *Service) ValidateAnswers(answers map[string]interface{}) (map[string]in
 	return d.Answers, nil
 }
 
-func (s *Service) GetTemplates() (*template.Template, error) {
-	out, err := s.exec("-t")
+func (s *Service) GetTemplates(answers map[string]interface{}) (*template.Template, error) {
+	b, err := json.Marshal(answers)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := s.exec("-t", "-i", string(b))
 	if err != nil {
 		return nil, err
 	}

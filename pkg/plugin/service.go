@@ -23,7 +23,11 @@ type ServiceApi interface {
 	// inside. It should return the data that should be written into the
 	// 'service.toml' file.
 	ValidateAnswers(in map[string]interface{}) (map[string]interface{}, error)
-	Template() *template.Template
+
+	// Template allows the plugin to return a set of custom templates that will
+	// be executed when a service is created. It also receives the answers from
+	// the service survey.
+	Template(in map[string]interface{}) *template.Template
 }
 
 // Service is the service plugin object that provides the channel that mikros
@@ -63,7 +67,6 @@ func (s *Service) Run() error {
 		if *input == "" {
 			return errors.New("invalid input")
 		}
-
 		in, err := inputToMap(*input)
 		if err != nil {
 			return err
@@ -76,7 +79,15 @@ func (s *Service) Run() error {
 
 		encoder.SetAnswers(data)
 	case *tFlag:
-		encoder.SetTemplate(s.api.Template())
+		if *input == "" {
+			return errors.New("invalid input")
+		}
+		in, err := inputToMap(*input)
+		if err != nil {
+			return err
+		}
+
+		encoder.SetTemplate(s.api.Template(in))
 	case *kFlag:
 		encoder.SetKind(s.api.Kind())
 	default:

@@ -188,7 +188,9 @@ func runServiceSurvey(cfg *settings.Settings, answers *surveyAnswers) (*client.S
 		return nil, err
 	}
 
+	answers.SetServiceAnswers(response)
 	answers.SetServiceDefinitions(d)
+
 	return svc, nil
 }
 
@@ -312,7 +314,7 @@ func writeServiceDefinitions(path string, answers *surveyAnswers) error {
 func generateSources(options *NewOptions, answers *surveyAnswers, svc *client.Service) error {
 	var externalTemplate *mtemplate.Template
 	if svc != nil {
-		res, err := svc.GetTemplates()
+		res, err := svc.GetTemplates(answers.ServiceAnswers())
 		if err != nil {
 			return err
 		}
@@ -387,32 +389,33 @@ func generateTemplateContext(options *NewOptions, answers *surveyAnswers, extern
 }
 
 func generateNewServiceArgs(answers *surveyAnswers, externalTemplate *mtemplate.Template) (string, error) {
-	svcSnake := strcase.ToSnake(answers.Name)
+	var (
+		svcSnake     = strcase.ToSnake(answers.Name)
+		svcInitBlock string
+	)
 
 	switch answers.Type {
 	case definition.ServiceType_gRPC.String():
-		return fmt.Sprintf(`Service: map[string]options.ServiceOptions{
+		svcInitBlock = fmt.Sprintf(`
 			"grpc": &options.GrpcServiceOptions{
 				ProtoServiceDescription: &%spb.%sService_ServiceDesc,
-			},
-		},`, svcSnake, strcase.ToCamel(answers.Name)), nil
+			},`, svcSnake)
 
 	case definition.ServiceType_HTTP.String():
-		return fmt.Sprintf(`Service: map[string]options.ServiceOptions{
+		svcInitBlock = fmt.Sprintf(`
 			"http": &options.HttpServiceOptions{
 				ProtoHttpServer: %spb.NewHttpServer(),
-			},
-		},`, svcSnake), nil
+			},`, svcSnake)
 
 	case definition.ServiceType_Native.String():
-		return `Service: map[string]options.ServiceOptions{
+		svcInitBlock = `
 			"native": &options.NativeServiceOptions{},
-		},`, nil
+`
 
 	case definition.ServiceType_Script.String():
-		return `Service: map[string]options.ServiceOptions{
+		svcInitBlock = `
 			"script": &options.ScriptServiceOptions{},
-		},`, nil
+`
 
 	default:
 		if externalTemplate != nil {
@@ -440,13 +443,14 @@ func generateNewServiceArgs(answers *surveyAnswers, externalTemplate *mtemplate.
 				if err != nil {
 					return "", err
 				}
-
-				return block, nil
+				svcInitBlock = block
 			}
 		}
 	}
 
-	return "", nil
+	return fmt.Sprintf(`Service: map[string]options.ServiceOptions{
+			%s
+		},`, svcInitBlock), nil
 }
 
 func generateImports(answers *surveyAnswers) map[string][]ImportContext {
@@ -475,7 +479,7 @@ func generateImports(answers *surveyAnswers) map[string][]ImportContext {
 	return imports
 }
 
-func createServiceTemplates(filenames []template.File, tplContext interface{}, externalTemplate *mtemplate.Template) error {
+func createServiceTemplates(filenames []template.File, tplContext TemplateContext, externalTemplate *mtemplate.Template) error {
 	// Execute our templates
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
 		TemplateNames: filenames,
@@ -501,9 +505,17 @@ func createServiceTemplates(filenames []template.File, tplContext interface{}, e
 
 		files := make([]*template.Data, len(templateNames))
 		for i, t := range externalTemplate.Templates {
+			name := templateNames[i].Name
+			if name == "" {
+				name = templateNames[i].Output
+			}
+
+			// Set the context PluginData with custom context from the plugin
+			tplContext.PluginData = t.Context
 			files[i] = &template.Data{
-				FileName: templateNames[i].Name,
+				FileName: name,
 				Content:  []byte(t.Content),
+				Context:  tplContext,
 			}
 		}
 
@@ -514,7 +526,7 @@ func createServiceTemplates(filenames []template.File, tplContext interface{}, e
 			return err
 		}
 
-		if err := runTemplates(session, tplContext); err != nil {
+		if err := runTemplates(session, nil); err != nil {
 			return err
 		}
 	}

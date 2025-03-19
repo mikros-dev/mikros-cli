@@ -23,6 +23,8 @@ type Template struct {
 	// inside the main template.
 	WithExternalServicesArg string `json:"with_external_services_arg,omitempty"`
 
+	// Templates contains a list of custom template files that will be generated
+	// when the service is selected for a service.
 	Templates []*File `json:"templates,omitempty"`
 }
 
@@ -31,4 +33,8 @@ type File struct {
 	Name      string `json:"name,omitempty"`
 	Output    string `json:"output,omitempty"`
 	Extension string `json:"extension,omitempty"`
+
+	// Context is a custom context to be used inside custom templates exported
+	// by the plugin.
+	Context interface{} `json:"context,omitempty"`
 }

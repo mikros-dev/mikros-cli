@@ -15,6 +15,7 @@ type surveyAnswers struct {
 	Features  []string
 	Lifecycle []string
 
+	serviceAnswers     map[string]interface{}
 	featureDefinitions map[string]*surveyAnswersDefinitions
 	serviceDefinitions *surveyAnswersDefinitions
 }
@@ -29,7 +30,7 @@ func newSurveyAnswers() *surveyAnswers {
 	return a
 }
 
-func (i *surveyAnswers) TemplateNames() []template.File {
+func (s *surveyAnswers) TemplateNames() []template.File {
 	names := []template.File{
 		{
 			Name:      "main",
@@ -41,7 +42,7 @@ func (i *surveyAnswers) TemplateNames() []template.File {
 		},
 	}
 
-	if len(i.Lifecycle) > 0 {
+	if len(s.Lifecycle) > 0 {
 		names = append(names, template.File{
 			Name:      "lifecycle",
 			Extension: "go",
@@ -51,28 +52,36 @@ func (i *surveyAnswers) TemplateNames() []template.File {
 	return names
 }
 
-func (i *surveyAnswers) AddFeatureDefinitions(name string, answers interface{}) {
-	if i.featureDefinitions == nil {
-		i.featureDefinitions = make(map[string]*surveyAnswersDefinitions)
+func (s *surveyAnswers) AddFeatureDefinitions(name string, answers interface{}) {
+	if s.featureDefinitions == nil {
+		s.featureDefinitions = make(map[string]*surveyAnswersDefinitions)
 	}
 
-	i.featureDefinitions[name] = &surveyAnswersDefinitions{
+	s.featureDefinitions[name] = &surveyAnswersDefinitions{
 		definitions: answers,
 	}
 }
 
-func (i *surveyAnswers) SetServiceDefinitions(answers interface{}) {
-	i.serviceDefinitions = &surveyAnswersDefinitions{
+func (s *surveyAnswers) SetServiceDefinitions(answers interface{}) {
+	s.serviceDefinitions = &surveyAnswersDefinitions{
 		definitions: answers,
 	}
 }
 
-func (i *surveyAnswers) ServiceDefinitions() *surveyAnswersDefinitions {
-	return i.serviceDefinitions
+func (s *surveyAnswers) SetServiceAnswers(answers map[string]interface{}) {
+	s.serviceAnswers = answers
 }
 
-func (i *surveyAnswers) FeatureDefinitions() map[string]*surveyAnswersDefinitions {
-	return i.featureDefinitions
+func (s *surveyAnswers) ServiceDefinitions() *surveyAnswersDefinitions {
+	return s.serviceDefinitions
+}
+
+func (s *surveyAnswers) FeatureDefinitions() map[string]*surveyAnswersDefinitions {
+	return s.featureDefinitions
+}
+
+func (s *surveyAnswers) ServiceAnswers() map[string]interface{} {
+	return s.serviceAnswers
 }
 
 type surveyAnswersDefinitions struct {

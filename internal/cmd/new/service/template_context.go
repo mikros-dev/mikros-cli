@@ -20,6 +20,7 @@ type TemplateContext struct {
 	GrpcMethods              []*protobuf.Method
 	Imports                  map[string][]ImportContext
 	ServiceTypeCustomAnswers interface{}
+	PluginData               interface{}
 }
 
 type ImportContext struct {

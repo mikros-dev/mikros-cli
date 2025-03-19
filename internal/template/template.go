@@ -28,6 +28,7 @@ type Session struct {
 type Info struct {
 	template *template.Template
 	name     File
+	context  interface{}
 }
 
 // File is representation of a template file to be processed when
@@ -94,6 +95,7 @@ func NewSessionFromFiles(options *LoadOptions, files embed.FS) (*Session, error)
 type Data struct {
 	FileName string
 	Content  []byte
+	Context  interface{}
 }
 
 func NewSessionFromData(options *LoadOptions, files []*Data) (*Session, error) {
@@ -104,7 +106,12 @@ func NewSessionFromData(options *LoadOptions, files []*Data) (*Session, error) {
 		)
 
 		idx := slices.IndexFunc(options.TemplateNames, func(t File) bool {
-			return t.Name == name
+			tplName := t.Name
+			if tplName == "" {
+				tplName = t.Output
+			}
+
+			return tplName == name
 		})
 		if idx == -1 {
 			// The template is not being used at the moment.
@@ -119,6 +126,7 @@ func NewSessionFromData(options *LoadOptions, files []*Data) (*Session, error) {
 		templates = append(templates, &Info{
 			name:     options.TemplateNames[idx],
 			template: tpl,
+			context:  file.Context,
 		})
 	}
 
@@ -167,7 +175,12 @@ func (s *Session) ExecuteTemplates(ctx interface{}) ([]*GeneratedTemplate, error
 		var buf bytes.Buffer
 		w := bufio.NewWriter(&buf)
 
-		if err := t.template.Execute(w, ctx); err != nil {
+		tplCtx := ctx
+		if ctx == nil {
+			tplCtx = t.context
+		}
+
+		if err := t.template.Execute(w, tplCtx); err != nil {
 			return nil, err
 		}
 
