@@ -53,7 +53,7 @@ func newCmdInit(cfg *settings.Settings) {
 			fmt.Printf("\n$ make setup\n\n")
 
 		case "protobuf-module":
-			if err := protobuf.New(); err != nil {
+			if err := protobuf.New(cfg); err != nil {
 				fmt.Println("new:", err)
 				return
 			}
