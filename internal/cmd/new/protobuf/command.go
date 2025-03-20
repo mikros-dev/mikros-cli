@@ -2,7 +2,6 @@ package protobuf
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,7 +80,6 @@ func generateTemplates(cfg *settings.Settings, answers *Answers) error {
 		}
 	}()
 
-	fmt.Println(templateBasePath)
 	if err := generateProtobufFiles(cfg, templateBasePath, answers); err != nil {
 		return err
 	}
@@ -105,22 +103,51 @@ func getTemplatesBasePath(serviceName string) (string, error) {
 			return os.Getwd()
 		}
 
-		var projectPath string
-		for _, file := range files {
-			if file.IsDir() {
-				projectPath = filepath.Join(repo.RootPath, "proto", file.Name())
-				break
-			}
+		projectPath, err := findProtoMainProjectPath(repo.RootPath, serviceName, files)
+		if err != nil {
+			return os.Getwd()
 		}
 
-		if projectPath == "" {
-			return "", errors.New("could not find protobuf main project folder")
-		}
-
-		return filepath.Join(projectPath, strings.ToLower(strcase.ToSnake(serviceName))), nil
+		return projectPath, nil
 	}
 
-	return os.Getwd()
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	// Is there any proto/ folder from where we are now? If so, use the same
+	// approach.
+	if path.FindPath(filepath.Join(cwd, "proto")) {
+		files, err := os.ReadDir(filepath.Join(cwd, "proto"))
+		if err != nil {
+			return cwd, nil
+		}
+
+		projectPath, err := findProtoMainProjectPath(cwd, serviceName, files)
+		if err != nil {
+			return cwd, nil
+		}
+
+		return projectPath, nil
+	}
+
+	return cwd, nil
+}
+
+func findProtoMainProjectPath(basePath, serviceName string, files []os.DirEntry) (string, error) {
+	var projectPath string
+	for _, file := range files {
+		if file.IsDir() {
+			projectPath = filepath.Join(basePath, "proto", file.Name())
+			break
+		}
+	}
+	if projectPath == "" {
+		return "", errors.New("could not find protobuf main project folder")
+	}
+
+	return filepath.Join(projectPath, strings.ToLower(strcase.ToSnake(serviceName))), nil
 }
 
 func generateProtobufFiles(cfg *settings.Settings, basePath string, answers *Answers) error {
