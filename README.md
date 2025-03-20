@@ -34,7 +34,7 @@ with the project selected at the survey and with some source files in it.
 * Full support for rust services
 * ~~Support for creating protobuf projects~~
 * Support for creating services monorepo projects
-* Command for creating protobuf file from templates
+* ~~Command for creating protobuf file from templates~~
 * ~~Use [bubbletea](https://github.com/charmbracelet/bubbletea) for UI surveys.~~
 * ~~Add command to generate default config file~~
 

@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf"
 	"github.com/mikros-dev/mikros-cli/internal/cmd/new/project"
 	"github.com/mikros-dev/mikros-cli/internal/cmd/new/service"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
