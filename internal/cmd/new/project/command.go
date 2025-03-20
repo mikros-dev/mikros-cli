@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/charmbracelet/huh"
-	"github.com/creasty/defaults"
 	"github.com/iancoleman/strcase"
 
 	proto_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/project/proto"
@@ -17,25 +15,7 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/path"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 	"github.com/mikros-dev/mikros-cli/internal/template"
-	"github.com/mikros-dev/mikros-cli/internal/ui"
 )
-
-type surveyAnswers struct {
-	RepositoryName string `survey:"repository_name" default:"protobuf-workspace"`
-	ProjectName    string `survey:"project_name" default:"services"`
-	VcsPath        string `survey:"vcs_path"`
-}
-
-func newSurveyAnswers(cfg *settings.Settings) *surveyAnswers {
-	a := &surveyAnswers{}
-	if err := defaults.Set(a); err != nil {
-		// Without default values
-		return a
-	}
-
-	a.VcsPath = cfg.Project.Template.VcsPath
-	return a
-}
 
 type NewOptions struct {
 	Path string
@@ -52,36 +32,6 @@ func New(cfg *settings.Settings, options *NewOptions) error {
 	}
 
 	return nil
-}
-
-func runSurvey(cfg *settings.Settings) (*surveyAnswers, error) {
-	answers := newSurveyAnswers(cfg)
-	form := huh.NewForm(
-		huh.NewGroup(
-			huh.NewInput().
-				Title("Repository name. Enter the name of the repository to create:").
-				Value(&answers.RepositoryName).
-				Validate(ui.IsEmpty("repository name cannot be empty")),
-
-			huh.NewInput().
-				Title("Project name. Enter your protobuf project name:").
-				Value(&answers.ProjectName).
-				Validate(ui.IsEmpty("project name cannot be empty")),
-
-			huh.NewInput().
-				Title("VCS path prefix. Enter your VCS path prefix to use for the project:").
-				Value(&answers.VcsPath).
-				Validate(ui.IsEmpty("VCS path prefix cannot be empty")),
-		),
-	).
-		WithAccessible(cfg.UI.Accessible).
-		WithTheme(cfg.GetTheme())
-
-	if err := form.Run(); err != nil {
-		return nil, err
-	}
-
-	return answers, nil
 }
 
 func generateProject(options *NewOptions, answers *surveyAnswers) error {

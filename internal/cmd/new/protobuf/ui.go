@@ -5,32 +5,10 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
+
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 	"github.com/mikros-dev/mikros-cli/internal/ui"
 )
-
-func New(cfg *settings.Settings) error {
-	name, kind, err := chooseService(cfg)
-	if err != nil {
-		return err
-	}
-
-	switch kind {
-	case "grpc":
-		_, _, _, err := runGrpcForm(cfg)
-		if err != nil {
-			return err
-		}
-
-	case "http":
-		if err := runHttpForm(cfg); err != nil {
-			return err
-		}
-	}
-
-	fmt.Println(name)
-	return nil
-}
 
 func chooseService(cfg *settings.Settings) (string, string, error) {
 	var (
@@ -102,7 +80,7 @@ func runGrpcForm(cfg *settings.Settings) (string, bool, []string, error) {
 	return entityName, defaultRPCs, customRPCs, nil
 }
 
-func runHttpForm(cfg *settings.Settings) error {
+func runHttpForm(cfg *settings.Settings) (bool, []*RPC, error) {
 	var (
 		isAuthenticated bool
 	)
@@ -118,8 +96,85 @@ func runHttpForm(cfg *settings.Settings) error {
 		WithTheme(cfg.GetTheme())
 
 	if err := form.Run(); err != nil {
-		return err
+		return false, nil, nil
 	}
 
-	return nil
+	rpcs, err := runHttpRPCForm(cfg)
+	if err != nil {
+		return false, nil, nil
+	}
+
+	return isAuthenticated, rpcs, nil
+}
+
+func runHttpRPCForm(cfg *settings.Settings) ([]*RPC, error) {
+	var (
+		rpcs []*RPC
+	)
+
+	for {
+		var (
+			name           string
+			method         string
+			endpoint       string
+			continueAdding bool
+		)
+
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Name. Enter the RPC name:").
+					Value(&name).
+					Validate(ui.IsEmpty("RPC name cannot be empty")),
+
+				huh.NewSelect[string]().
+					Title("Method. Enter the RPC method:").
+					Options(
+						huh.NewOption("GET", "get"),
+						huh.NewOption("POST", "post"),
+						huh.NewOption("PUT", "put"),
+						huh.NewOption("DELETE", "delete"),
+						huh.NewOption("PATCH", "patch"),
+					).
+					Value(&method),
+
+				huh.NewInput().
+					Title("Endpoint. Enter the RPC endpoint:").
+					Value(&endpoint).
+					Validate(ui.IsEmpty("RPC endpoint cannot be empty")),
+			),
+		).
+			WithAccessible(cfg.UI.Accessible).
+			WithTheme(cfg.GetTheme())
+
+		if err := form.Run(); err != nil {
+			return nil, err
+		}
+
+		rpcs = append(rpcs, &RPC{
+			Name:         name,
+			HTTPMethod:   method,
+			HTTPEndpoint: endpoint,
+		})
+
+		confirm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewConfirm().
+					Title("Do you want to add a new RPC?").
+					Value(&continueAdding),
+			),
+		).
+			WithAccessible(cfg.UI.Accessible).
+			WithTheme(cfg.GetTheme())
+
+		if err := confirm.Run(); err != nil {
+			return nil, err
+		}
+		if !continueAdding {
+			break
+		}
+	}
+
+	fmt.Println(rpcs, len(rpcs))
+	return rpcs, nil
 }
