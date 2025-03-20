@@ -1,6 +1,6 @@
 syntax = "proto3";{{$serviceName := .ServiceName}}{{$protoServiceName := toSnake .ServiceName}}
 
-package services.{{$protoServiceName}};
+package {{.MainPackageName}}.{{$protoServiceName}};
 
 option go_package = "{{.VCSProjectPrefix}}/{{.RepositoryName}}/gen/go/{{.MainPackageName}}/{{$protoServiceName}};{{$protoServiceName}}";
 {{if .IsHTTPService}}
@@ -8,7 +8,11 @@ option go_package = "{{.VCSProjectPrefix}}/{{.RepositoryName}}/gen/go/{{.MainPac
 import "google/api/annotations.proto";
 import "mikros_extensions.proto";
 import "mikros_openapi.proto";
+{{- else}}
+import "{{.MainPackageName}}/{{$protoServiceName}}/{{$protoServiceName}}.proto";
+{{- end}}
 
+{{- if .IsHTTPService}}
 option (openapi.metadata) = {
   info: {
     title: "{{.ServiceName}}"
@@ -67,14 +71,28 @@ service {{toCamel .ServiceName}}Service {
   {{- range $method := .RPCMethods}}
   rpc {{$method.Name}}({{$method.Name}}Request) returns ({{$method.Name}}Response);
   {{- end}}
+  {{- range $method := .CustomRPCs}}
+  rpc {{$method.Name}}({{$method.RequestName}}) returns ({{$method.ResponseName}});
+  {{- end}}
 {{- end}}
 }
 
 {{range $method := .RPCMethods -}}
 message {{$method.Name}}Request {
+  {{.RequestBody}}
 }
 
 message {{$method.Name}}Response {
+  {{.ResponseBody}}
+}
+
+{{end -}}
+
+{{range $method := .CustomRPCs -}}
+message {{$method.RequestName}} {
+}
+
+message {{$method.ResponseName}} {
 }
 
 {{end -}}

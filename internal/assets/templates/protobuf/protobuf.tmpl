@@ -1,6 +1,6 @@
 syntax = "proto3";{{$protoServiceName := toSnake .ServiceName}}
 
-package services.{{$protoServiceName}};
+package {{.MainPackageName}}.{{$protoServiceName}};
 
 option go_package = "{{.VCSProjectPrefix}}/{{.RepositoryName}}/gen/go/{{.MainPackageName}}/{{$protoServiceName}};{{$protoServiceName}}";
 
