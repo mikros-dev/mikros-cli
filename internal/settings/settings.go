@@ -51,7 +51,7 @@ type UI struct {
 	Accessible bool   `toml:"accessible"`
 }
 
-func New() (*Settings, error) {
+func Load() (*Settings, error) {
 	cfg, err := NewDefault()
 	if err != nil {
 		return nil, err
