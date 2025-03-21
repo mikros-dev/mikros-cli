@@ -1,7 +1,6 @@
 package protobuf
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/huh"
@@ -175,6 +174,5 @@ func runHttpRPCForm(cfg *settings.Settings) ([]*RPC, error) {
 		}
 	}
 
-	fmt.Println(rpcs, len(rpcs))
 	return rpcs, nil
 }

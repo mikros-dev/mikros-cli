@@ -20,11 +20,12 @@ type Context struct {
 	VCSProjectPrefix string
 }
 
-func generateTemplateContext(cfg *settings.Settings, answers *Answers) *Context {
+func generateTemplateContext(cfg *settings.Settings, answers *Answers, profile string) *Context {
 	var (
-		entityName string
-		rpcs       []*RPC
-		customRPCs []*RPC
+		entityName    string
+		rpcs          []*RPC
+		customRPCs    []*RPC
+		profileValues = projectDefaultValues(cfg, profile)
 	)
 
 	if answers.Grpc != nil {
@@ -46,10 +47,23 @@ func generateTemplateContext(cfg *settings.Settings, answers *Answers) *Context 
 		EntityName:       entityName,
 		RPCMethods:       rpcs,
 		CustomRPCs:       customRPCs,
-		MainPackageName:  cfg.Project.ProtobufMonorepo.ProjectName,
-		RepositoryName:   cfg.Project.ProtobufMonorepo.RepositoryName,
-		VCSProjectPrefix: cfg.Project.ProtobufMonorepo.VcsPath,
+		MainPackageName:  profileValues.ProjectName,
+		RepositoryName:   profileValues.RepositoryName,
+		VCSProjectPrefix: profileValues.VcsPath,
 	}
+}
+
+func projectDefaultValues(cfg *settings.Settings, profile string) settings.ProtobufMonorepo {
+	if profile == "default" {
+		return cfg.Project.ProtobufMonorepo
+	}
+
+	d, ok := cfg.Profile[profile]
+	if !ok {
+		return cfg.Project.ProtobufMonorepo
+	}
+
+	return d.Project.ProtobufMonorepo
 }
 
 func (c *Context) IsHTTPService() bool {
