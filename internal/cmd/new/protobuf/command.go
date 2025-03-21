@@ -15,7 +15,11 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/template"
 )
 
-func New(cfg *settings.Settings) error {
+type NewOptions struct {
+	Profile string
+}
+
+func New(cfg *settings.Settings, options *NewOptions) error {
 	name, kind, err := chooseService(cfg)
 	if err != nil {
 		return err
@@ -51,14 +55,14 @@ func New(cfg *settings.Settings) error {
 		}
 	}
 
-	if err := generateTemplates(cfg, answers); err != nil {
+	if err := generateTemplates(cfg, answers, options); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func generateTemplates(cfg *settings.Settings, answers *Answers) error {
+func generateTemplates(cfg *settings.Settings, answers *Answers, options *NewOptions) error {
 	templateBasePath, err := getTemplatesBasePath(answers.ServiceName)
 	if err != nil {
 		return err
@@ -80,7 +84,7 @@ func generateTemplates(cfg *settings.Settings, answers *Answers) error {
 		}
 	}()
 
-	if err := generateProtobufFiles(cfg, templateBasePath, answers); err != nil {
+	if err := generateProtobufFiles(cfg, templateBasePath, answers, options); err != nil {
 		return err
 	}
 
@@ -150,7 +154,7 @@ func findProtoMainProjectPath(basePath, serviceName string, files []os.DirEntry)
 	return filepath.Join(projectPath, strings.ToLower(strcase.ToSnake(serviceName))), nil
 }
 
-func generateProtobufFiles(cfg *settings.Settings, basePath string, answers *Answers) error {
+func generateProtobufFiles(cfg *settings.Settings, basePath string, answers *Answers, options *NewOptions) error {
 	var (
 		filename = strings.ToLower(strcase.ToSnake(answers.ServiceName))
 		tplFiles = []template.File{
@@ -177,7 +181,7 @@ func generateProtobufFiles(cfg *settings.Settings, basePath string, answers *Ans
 		return err
 	}
 
-	ctx := generateTemplateContext(cfg, answers)
+	ctx := generateTemplateContext(cfg, answers, options.Profile)
 	if err := runTemplates(basePath, session, ctx); err != nil {
 		return err
 	}

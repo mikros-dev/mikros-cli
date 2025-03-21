@@ -33,8 +33,9 @@ func newCmdInit(cfg *settings.Settings) {
 		switch selected {
 		case "protobuf-monorepo":
 			options := &project.NewOptions{
-				Path:  viper.GetString("project-path"),
-				NoVCS: viper.GetBool("project-no-vcs"),
+				NoVCS:   viper.GetBool("project-no-vcs"),
+				Path:    viper.GetString("project-path"),
+				Profile: viper.GetString("project-profile"),
 			}
 
 			if err := project.New(cfg, options); err != nil {
@@ -47,7 +48,11 @@ func newCmdInit(cfg *settings.Settings) {
 			fmt.Printf("\n$ make setup\n\n")
 
 		case "protobuf-module":
-			if err := protobuf.New(cfg); err != nil {
+			options := &protobuf.NewOptions{
+				Profile: viper.GetString("project-profile"),
+			}
+
+			if err := protobuf.New(cfg, options); err != nil {
 				fmt.Println("new:", err)
 				return
 			}
@@ -76,7 +81,7 @@ func newCmdInit(cfg *settings.Settings) {
 
 func setNewCmdFlags() {
 	// path option
-	newCmd.Flags().String("path", "", "Sets the output path name (default: cwd).")
+	newCmd.Flags().String("path", "", "Sets the output path name (default cwd).")
 	_ = viper.BindPFlag("project-path", newCmd.Flags().Lookup("path"))
 
 	// proto file option
@@ -84,8 +89,12 @@ func setNewCmdFlags() {
 	_ = viper.BindPFlag("project-proto", newCmd.Flags().Lookup("proto"))
 
 	// no-vcs option
-	newCmd.Flags().Bool("no-vcs", false, "Disables creating projects with VCS support (default: true).")
+	newCmd.Flags().Bool("no-vcs", false, "Disables creating projects with VCS support (default true).")
 	_ = viper.BindPFlag("project-no-vcs", newCmd.Flags().Lookup("no-vcs"))
+
+	// profile option
+	newCmd.Flags().String("profile", "default", "Sets the profile to use.")
+	_ = viper.BindPFlag("project-profile", newCmd.Flags().Lookup("profile"))
 }
 
 func runNewProjectForm(cfg *settings.Settings) (string, error) {

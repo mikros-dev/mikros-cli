@@ -7,8 +7,8 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/ui"
 )
 
-func runSurvey(cfg *settings.Settings) (*surveyAnswers, error) {
-	answers := newSurveyAnswers(cfg)
+func runSurvey(cfg *settings.Settings, profile string) (*surveyAnswers, error) {
+	answers := newSurveyAnswers(cfg, profile)
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().

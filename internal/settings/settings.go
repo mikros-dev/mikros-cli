@@ -17,9 +17,10 @@ const (
 )
 
 type Settings struct {
-	Paths   Path    `toml:"paths"`
-	Project Project `toml:"project"`
-	UI      UI      `toml:"ui"`
+	Paths   Path               `toml:"paths"`
+	Project Project            `toml:"project"`
+	UI      UI                 `toml:"ui"`
+	Profile map[string]Profile `toml:"profile"`
 }
 
 type Path struct {
@@ -29,6 +30,10 @@ type Path struct {
 type Plugins struct {
 	Services string `toml:"services" default:"$HOME/.mikros/plugins/services"`
 	Features string `toml:"features" default:"$HOME/.mikros/plugins/features"`
+}
+
+type Profile struct {
+	Project Project `toml:"project"`
 }
 
 type Project struct {

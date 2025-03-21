@@ -19,12 +19,13 @@ import (
 )
 
 type NewOptions struct {
-	Path  string
-	NoVCS bool
+	NoVCS   bool
+	Path    string
+	Profile string
 }
 
 func New(cfg *settings.Settings, options *NewOptions) error {
-	answers, err := runSurvey(cfg)
+	answers, err := runSurvey(cfg, options.Profile)
 	if err != nil {
 		return err
 	}
