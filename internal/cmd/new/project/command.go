@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"github.com/mikros-dev/mikros-cli/internal/git"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,7 +19,8 @@ import (
 )
 
 type NewOptions struct {
-	Path string
+	Path  string
+	NoVCS bool
 }
 
 func New(cfg *settings.Settings, options *NewOptions) error {
@@ -60,6 +62,12 @@ func generateProject(options *NewOptions, answers *surveyAnswers) error {
 	// Initialize go module for the new repository
 	if err := golang.ModInit(projectModuleName(answers)); err != nil {
 		return err
+	}
+
+	if !options.NoVCS {
+		if _, err := git.Init(); err != nil {
+			return err
+		}
 	}
 
 	return nil

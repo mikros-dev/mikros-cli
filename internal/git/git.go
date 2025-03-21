@@ -40,6 +40,14 @@ func LoadFromCwd() (*Git, error) {
 	}, nil
 }
 
+func Init() (*Git, error) {
+	if _, err := process.Exec("git", "init"); err != nil {
+		return nil, err
+	}
+
+	return LoadFromCwd()
+}
+
 func (g *Git) IsValidRepository() bool {
 	return g.isRepository
 }
