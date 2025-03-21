@@ -32,11 +32,13 @@ type Plugins struct {
 }
 
 type Project struct {
-	Template Template `toml:"template"`
+	ProtobufMonorepo ProtobufMonorepo `toml:"protobuf_monorepo"`
 }
 
-type Template struct {
-	VcsPath string `toml:"vcs_path"`
+type ProtobufMonorepo struct {
+	RepositoryName string `toml:"repository_name" default:"protobuf-workspace"`
+	ProjectName    string `toml:"project_name" default:"services"`
+	VcsPath        string `toml:"vcs_path" default:"github.com/your-organization"`
 }
 
 type UI struct {

@@ -1,0 +1,14 @@
+syntax = "proto3";{{$protoServiceName := toSnake .ServiceName}}
+
+package {{.MainPackageName}}.{{$protoServiceName}};
+
+option go_package = "{{.VCSProjectPrefix}}/{{.RepositoryName}}/gen/go/{{.MainPackageName}}/{{$protoServiceName}};{{$protoServiceName}}";
+
+import "google/protobuf/timestamp.proto";
+
+message {{toCamel .EntityName}}Wire {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  google.protobuf.Timestamp deleted_at = 4;
+}

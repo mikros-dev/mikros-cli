@@ -1,0 +1,98 @@
+syntax = "proto3";{{$serviceName := .ServiceName}}{{$protoServiceName := toSnake .ServiceName}}
+
+package {{.MainPackageName}}.{{$protoServiceName}};
+
+option go_package = "{{.VCSProjectPrefix}}/{{.RepositoryName}}/gen/go/{{.MainPackageName}}/{{$protoServiceName}};{{$protoServiceName}}";
+{{if .IsHTTPService}}
+
+import "google/api/annotations.proto";
+import "mikros_extensions.proto";
+import "mikros_openapi.proto";
+{{- else}}
+import "{{.MainPackageName}}/{{$protoServiceName}}/{{$protoServiceName}}.proto";
+{{- end}}
+
+{{- if .IsHTTPService}}
+option (openapi.metadata) = {
+  info: {
+    title: "{{.ServiceName}}"
+    version: "v0.1.0"
+  }
+};
+{{- end}}
+
+service {{toCamel .ServiceName}}Service {
+{{- if .IsHTTPService}}
+ option (mikros.extensions.service_options) = {
+    authorization: {
+      mode: AUTHORIZATION_MODE_CUSTOM
+      custom_auth_name: "scopes"
+    }
+  };
+
+  {{- range $method := .RPCMethods}}
+  rpc {{$method.Name}}({{$method.Name}}Request) returns ({{$method.Name}}Response) {
+    option (google.api.http) = {
+      {{.HTTPMethod}}: "{{.HTTPEndpoint}}"
+      {{- if .HasBody}}
+      body: "*"
+      {{- end}}
+    };
+
+    option (mikros.extensions.method_options) = {
+      http: {
+        auth_arg: "{{.AuthArgMode}}"
+      }
+    };
+
+    option (openapi.operation) = {
+      summary: "<ADD ENDPOINT SUMMARY HERE>"
+      description: "<ADD ENDPOINT DESCRIPTION HERE>"
+      tags: "{{$serviceName}}"
+
+      response: {
+        code: RESPONSE_CODE_OK
+        description: "Request successful"
+      }
+
+      response: {
+        code: RESPONSE_CODE_UNAUTHORIZED
+        description: "Unauthorized access"
+      }
+
+      response: {
+        code: RESPONSE_CODE_BAD_REQUEST
+        description: "Invalid request arguments"
+      }
+    };
+  }
+  {{- end}}
+{{- else}}
+  {{- range $method := .RPCMethods}}
+  rpc {{$method.Name}}({{$method.Name}}Request) returns ({{$method.Name}}Response);
+  {{- end}}
+  {{- range $method := .CustomRPCs}}
+  rpc {{$method.Name}}({{$method.RequestName}}) returns ({{$method.ResponseName}});
+  {{- end}}
+{{- end}}
+}
+
+{{range $method := .RPCMethods -}}
+message {{$method.Name}}Request {
+  {{.RequestBody}}
+}
+
+message {{$method.Name}}Response {
+  {{.ResponseBody}}
+}
+
+{{end -}}
+
+{{range $method := .CustomRPCs -}}
+message {{$method.RequestName}} {
+}
+
+message {{$method.ResponseName}} {
+}
+
+{{end -}}
