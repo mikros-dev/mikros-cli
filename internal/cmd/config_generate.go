@@ -9,10 +9,10 @@ import (
 )
 
 var (
-	configSetupCmd = &cobra.Command{
-		Use:   "setup",
+	configGenerateCmd = &cobra.Command{
+		Use:   "generate",
 		Short: "Create and install default settings",
-		Long: `setup creates and installs all default settings into the
+		Long: `generate creates and installs all default settings into the
 CLI TOML file, located in $HOME/.mikros/config.toml`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := config.CreateDefaultSettings(); err != nil {
@@ -23,6 +23,6 @@ CLI TOML file, located in $HOME/.mikros/config.toml`,
 	}
 )
 
-func configSetupCmdInit() {
-	configCmd.AddCommand(configSetupCmd)
+func configGenerateCmdInit() {
+	configCmd.AddCommand(configGenerateCmd)
 }

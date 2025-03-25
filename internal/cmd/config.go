@@ -22,6 +22,7 @@ inside the system.`,
 )
 
 func configCmdInit() {
-	configSetupCmdInit()
+	configGenerateCmdInit()
+	configEditCmdInit()
 	rootCmd.AddCommand(configCmd)
 }

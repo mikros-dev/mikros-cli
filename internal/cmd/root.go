@@ -20,7 +20,7 @@ framework to create new services.`,
 
 // Execute puts the CLI to execute.
 func Execute() {
-	cfg, err := settings.New()
+	cfg, err := settings.Load()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
