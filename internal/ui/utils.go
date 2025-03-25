@@ -1,19 +1,26 @@
 package ui
 
-//
-//import (
-//	"github.com/AlecAivazis/survey/v2"
-//)
-//
-//func YesNo(message string) bool {
-//	res := false
-//	prompt := &survey.Confirm{
-//		Message: message,
-//	}
-//
-//	if err := survey.AskOne(prompt, &res); err != nil {
-//		return false
-//	}
-//
-//	return res
-//}
+import (
+	"github.com/charmbracelet/huh"
+
+	"github.com/mikros-dev/mikros-cli/internal/settings"
+)
+
+func Alert(cfg *settings.Settings, text string) error {
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title(text).
+				Negative("").
+				Affirmative("Ok"),
+		),
+	).
+		WithAccessible(cfg.UI.Accessible).
+		WithTheme(cfg.GetTheme())
+
+	if err := form.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}

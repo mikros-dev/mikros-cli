@@ -9,9 +9,24 @@ func New() error {
 	if err != nil {
 		return err
 	}
+	h1, err := cfg.Hash()
+	if err != nil {
+		return err
+	}
 
 	if err := runForm(cfg); err != nil {
 		return err
+	}
+
+	h2, err := cfg.Hash()
+	if err != nil {
+		return err
+	}
+
+	if h1 != h2 {
+		if err := confirmSave(cfg); err != nil {
+			return err
+		}
 	}
 
 	return nil

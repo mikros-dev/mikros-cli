@@ -28,3 +28,13 @@
   # Sets the name of your VCS organization path to be used in generated project,
   # like in the go.mod file.
   protobuf_monorepo.vcs_path = ""
+
+[profile.one]
+project.protobuf.repository_name = ""
+project.protobuf.project_name = ""
+project.protobuf.vcs_patht = ""
+
+[profile.two]
+project.protobuf.repository_name = ""
+project.protobuf.project_name = ""
+project.protobuf.vcs_patht = ""
