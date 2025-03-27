@@ -211,3 +211,11 @@ func runTemplates(basePath string, session *template.Session, context interface{
 
 	return nil
 }
+
+func getAuthArgMode(method string) string {
+	if method == "get" {
+		return "READ"
+	}
+
+	return "WRITE"
+}

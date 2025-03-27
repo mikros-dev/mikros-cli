@@ -4,15 +4,13 @@ package {{.MainPackageName}}.{{$protoServiceName}};
 
 option go_package = "{{.VCSProjectPrefix}}/{{.RepositoryName}}/gen/go/{{.MainPackageName}}/{{$protoServiceName}};{{$protoServiceName}}";
 {{if .IsHTTPService}}
-
 import "google/api/annotations.proto";
 import "mikros_extensions.proto";
 import "mikros_openapi.proto";
 {{- else}}
 import "{{.MainPackageName}}/{{$protoServiceName}}/{{$protoServiceName}}.proto";
 {{- end}}
-
-{{- if .IsHTTPService}}
+{{if .IsHTTPService}}
 option (openapi.metadata) = {
   info: {
     title: "{{.ServiceName}}"
@@ -23,14 +21,15 @@ option (openapi.metadata) = {
 
 service {{toCamel .ServiceName}}Service {
 {{- if .IsHTTPService}}
+{{- if .IsAuthenticated}}
  option (mikros.extensions.service_options) = {
     authorization: {
       mode: AUTHORIZATION_MODE_CUSTOM
       custom_auth_name: "scopes"
     }
   };
-
-  {{- range $method := .RPCMethods}}
+{{end}}
+{{- range $method := .RPCMethods}}
   rpc {{$method.Name}}({{$method.Name}}Request) returns ({{$method.Name}}Response) {
     option (google.api.http) = {
       {{.HTTPMethod}}: "{{.HTTPEndpoint}}"
@@ -38,13 +37,13 @@ service {{toCamel .ServiceName}}Service {
       body: "*"
       {{- end}}
     };
-
+    {{if .IsAuthenticated}}
     option (mikros.extensions.method_options) = {
       http: {
         auth_arg: "{{.AuthArgMode}}"
       }
     };
-
+    {{end}}
     option (openapi.operation) = {
       summary: "<ADD ENDPOINT SUMMARY HERE>"
       description: "<ADD ENDPOINT DESCRIPTION HERE>"
@@ -66,14 +65,14 @@ service {{toCamel .ServiceName}}Service {
       }
     };
   }
-  {{- end}}
-{{- else}}
-  {{- range $method := .RPCMethods}}
+{{end -}}
+{{- else -}}
+{{- range $method := .RPCMethods}}
   rpc {{$method.Name}}({{$method.Name}}Request) returns ({{$method.Name}}Response);
-  {{- end}}
-  {{- range $method := .CustomRPCs}}
+{{- end}}
+{{- range $method := .CustomRPCs}}
   rpc {{$method.Name}}({{$method.RequestName}}) returns ({{$method.ResponseName}});
-  {{- end}}
+{{- end}}
 {{- end}}
 }
 

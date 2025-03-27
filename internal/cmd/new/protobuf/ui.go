@@ -98,7 +98,7 @@ func runHttpForm(cfg *settings.Settings) (bool, []*RPC, error) {
 		return false, nil, nil
 	}
 
-	rpcs, err := runHttpRPCForm(cfg)
+	rpcs, err := runHttpRPCForm(cfg, isAuthenticated)
 	if err != nil {
 		return false, nil, nil
 	}
@@ -106,7 +106,7 @@ func runHttpForm(cfg *settings.Settings) (bool, []*RPC, error) {
 	return isAuthenticated, rpcs, nil
 }
 
-func runHttpRPCForm(cfg *settings.Settings) ([]*RPC, error) {
+func runHttpRPCForm(cfg *settings.Settings, isAuthenticated bool) ([]*RPC, error) {
 	var (
 		rpcs []*RPC
 	)
@@ -151,9 +151,11 @@ func runHttpRPCForm(cfg *settings.Settings) ([]*RPC, error) {
 		}
 
 		rpcs = append(rpcs, &RPC{
-			Name:         name,
-			HTTPMethod:   method,
-			HTTPEndpoint: endpoint,
+			IsAuthenticated: isAuthenticated,
+			Name:            name,
+			HTTPMethod:      method,
+			HTTPEndpoint:    endpoint,
+			AuthArgMode:     getAuthArgMode(method),
 		})
 
 		confirm := huh.NewForm(
