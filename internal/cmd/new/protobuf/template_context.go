@@ -10,6 +10,7 @@ import (
 
 type Context struct {
 	httpService      bool
+	IsAuthenticated  bool
 	ServiceName      string
 	Version          string
 	EntityName       string
@@ -22,10 +23,11 @@ type Context struct {
 
 func generateTemplateContext(cfg *settings.Settings, answers *Answers, profile string) *Context {
 	var (
-		entityName    string
-		rpcs          []*RPC
-		customRPCs    []*RPC
-		profileValues = projectDefaultValues(cfg, profile)
+		isAuthenticated bool
+		entityName      string
+		rpcs            []*RPC
+		customRPCs      []*RPC
+		profileValues   = projectDefaultValues(cfg, profile)
 	)
 
 	if answers.Grpc != nil {
@@ -38,10 +40,12 @@ func generateTemplateContext(cfg *settings.Settings, answers *Answers, profile s
 	}
 	if answers.Http != nil {
 		rpcs = answers.Http.RPCs
+		isAuthenticated = answers.Http.IsAuthenticated
 	}
 
 	return &Context{
 		httpService:      answers.Kind == "http",
+		IsAuthenticated:  isAuthenticated,
 		ServiceName:      answers.ServiceName,
 		Version:          "v0.1.0",
 		EntityName:       entityName,
@@ -75,14 +79,15 @@ func (c *Context) Extension() string {
 }
 
 type RPC struct {
-	Name         string
-	HTTPMethod   string
-	HTTPEndpoint string
-	AuthArgMode  string
-	RequestName  string
-	ResponseName string
-	RequestBody  string
-	ResponseBody string
+	IsAuthenticated bool
+	Name            string
+	HTTPMethod      string
+	HTTPEndpoint    string
+	AuthArgMode     string
+	RequestName     string
+	ResponseName    string
+	RequestBody     string
+	ResponseBody    string
 }
 
 func generateCRUDRPCs(entityName string) []*RPC {
