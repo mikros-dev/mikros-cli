@@ -1,0 +1,20 @@
+// This is just an example of a protobuf file. It was generated only to demonstrate
+// how you can organize your .proto files. It can be removed any time.
+
+syntax = "proto3";
+
+package {{.MainPackageName}}.example;
+
+option go_package = "{{.VCSProjectPrefix}}/{{.RepositoryName}}/gen/go/{{.MainPackageName}}/example;example";
+
+service ExampleService {
+  rpc GetExample(GetExampleRequest) returns(GetExampleResponse);
+}
+
+message GetExampleRequest {
+  string id = 1;
+}
+
+message GetExampleResponse {
+  string response = 1;
+}

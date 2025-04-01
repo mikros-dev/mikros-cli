@@ -1,7 +1,7 @@
 package golang
 
 import (
-	"github.com/somatech1/mikros-cli/pkg/process"
+	"github.com/mikros-dev/mikros-cli/internal/process"
 )
 
 // ModInit executes a "go mod init" at the current working directory.
