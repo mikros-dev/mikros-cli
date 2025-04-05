@@ -1,2 +1,12 @@
+# Binaries
+## Ignore all
+*
+
+## Unignore all with extensions in directories
+!*.*
+
+## Unignore all dirs
+!*/
+
 *.swp
 mikros

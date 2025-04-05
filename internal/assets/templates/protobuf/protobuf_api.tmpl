@@ -25,7 +25,7 @@ service {{toCamel .ServiceName}}Service {
  option (mikros.extensions.service_options) = {
     authorization: {
       mode: AUTHORIZATION_MODE_CUSTOM
-      custom_auth_name: "scopes"
+      custom_auth_name: "{{.CustomAuthName}}"
     }
   };
 {{end}}

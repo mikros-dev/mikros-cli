@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/creasty/defaults"
+	"github.com/mikros-dev/mikros-cli/internal/protobuf"
 
 	"github.com/mikros-dev/mikros-cli/internal/template"
 )
@@ -20,14 +21,28 @@ type surveyAnswers struct {
 	serviceDefinitions *surveyAnswersDefinitions
 }
 
-func newSurveyAnswers() *surveyAnswers {
+func newSurveyAnswers(protoFilename string) (*surveyAnswers, error) {
 	a := &surveyAnswers{}
 	if err := defaults.Set(a); err != nil {
 		// Without default values
-		return a
+		return loadProtoValues(protoFilename, a)
 	}
 
-	return a
+	return loadProtoValues(protoFilename, a)
+}
+
+func loadProtoValues(protoFilename string, a *surveyAnswers) (*surveyAnswers, error) {
+	if protoFilename == "" {
+		return a, nil
+	}
+
+	p, err := protobuf.Parse(protoFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	a.Name = p.ServiceName
+	return a, nil
 }
 
 func (s *surveyAnswers) TemplateNames() []template.File {

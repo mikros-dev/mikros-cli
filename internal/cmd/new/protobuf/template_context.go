@@ -14,6 +14,7 @@ type Context struct {
 	ServiceName      string
 	Version          string
 	EntityName       string
+	CustomAuthName   string
 	RPCMethods       []*RPC
 	CustomRPCs       []*RPC
 	MainPackageName  string
@@ -21,13 +22,13 @@ type Context struct {
 	VCSProjectPrefix string
 }
 
-func generateTemplateContext(cfg *settings.Settings, answers *Answers, profile string) *Context {
+func generateTemplateContext(cfg *settings.Settings, answers *Answers, profileName string) *Context {
 	var (
 		isAuthenticated bool
 		entityName      string
 		rpcs            []*RPC
 		customRPCs      []*RPC
-		profileValues   = projectDefaultValues(cfg, profile)
+		profile         = projectProfile(cfg, profileName)
 	)
 
 	if answers.Grpc != nil {
@@ -49,25 +50,27 @@ func generateTemplateContext(cfg *settings.Settings, answers *Answers, profile s
 		ServiceName:      answers.ServiceName,
 		Version:          "v0.1.0",
 		EntityName:       entityName,
+		CustomAuthName:   profile.Project.Templates.Protobuf.CustomAuthName,
 		RPCMethods:       rpcs,
 		CustomRPCs:       customRPCs,
-		MainPackageName:  profileValues.ProjectName,
-		RepositoryName:   profileValues.RepositoryName,
-		VCSProjectPrefix: profileValues.VcsPath,
+		MainPackageName:  profile.Project.ProtobufMonorepo.ProjectName,
+		RepositoryName:   profile.Project.ProtobufMonorepo.RepositoryName,
+		VCSProjectPrefix: profile.Project.ProtobufMonorepo.VcsPath,
 	}
 }
 
-func projectDefaultValues(cfg *settings.Settings, profile string) settings.ProtobufMonorepo {
-	if profile == "default" {
-		return cfg.Project.ProtobufMonorepo
+func projectProfile(cfg *settings.Settings, profileName string) *settings.Profile {
+	profile := &cfg.App
+	if profileName == "default" {
+		return profile
 	}
 
-	d, ok := cfg.Profile[profile]
+	d, ok := cfg.Profile[profileName]
 	if !ok {
-		return cfg.Project.ProtobufMonorepo
+		return profile
 	}
 
-	return d.Project.ProtobufMonorepo
+	return &d
 }
 
 func (c *Context) IsHTTPService() bool {

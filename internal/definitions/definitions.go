@@ -9,7 +9,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/somatech1/mikros/components/definition"
+	"github.com/mikros-dev/mikros/components/definition"
 )
 
 type WriteOptions struct {

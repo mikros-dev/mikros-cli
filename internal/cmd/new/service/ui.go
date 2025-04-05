@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	"github.com/charmbracelet/huh"
-	"github.com/somatech1/mikros/components/definition"
+	"github.com/mikros-dev/mikros/components/definition"
 
 	"github.com/mikros-dev/mikros-cli/internal/plugin"
 	"github.com/mikros-dev/mikros-cli/internal/plugin/client"
@@ -13,9 +13,8 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/ui"
 )
 
-func runSurvey(cfg *settings.Settings) (*surveyAnswers, error) {
+func runSurvey(cfg *settings.Settings, protoFilename string) (*surveyAnswers, error) {
 	var (
-		answers        = newSurveyAnswers()
 		supportedTypes = []huh.Option[string]{
 			huh.NewOption(definition.ServiceType_gRPC.String(), definition.ServiceType_gRPC.String()),
 			huh.NewOption(definition.ServiceType_HTTP.String(), definition.ServiceType_HTTP.String()),
@@ -24,6 +23,11 @@ func runSurvey(cfg *settings.Settings) (*surveyAnswers, error) {
 		}
 	)
 
+	answers, err := newSurveyAnswers(protoFilename)
+	if err != nil {
+		return nil, err
+	}
+	
 	newTypes, err := plugin.GetNewServiceKinds(cfg)
 	if err != nil {
 		return nil, err
