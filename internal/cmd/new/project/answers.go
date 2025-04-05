@@ -10,25 +10,26 @@ type surveyAnswers struct {
 	VcsPath        string `survey:"vcs_path"`
 }
 
-func newSurveyAnswers(cfg *settings.Settings, profile string) *surveyAnswers {
-	values := surveyDefaultValues(cfg, profile)
+func newSurveyAnswers(cfg *settings.Settings, profileName string) *surveyAnswers {
+	profile := surveyProfile(cfg, profileName)
 
 	return &surveyAnswers{
-		RepositoryName: values.RepositoryName,
-		ProjectName:    values.ProjectName,
-		VcsPath:        values.VcsPath,
+		RepositoryName: profile.Project.ProtobufMonorepo.RepositoryName,
+		ProjectName:    profile.Project.ProtobufMonorepo.ProjectName,
+		VcsPath:        profile.Project.ProtobufMonorepo.VcsPath,
 	}
 }
 
-func surveyDefaultValues(cfg *settings.Settings, profile string) settings.ProtobufMonorepo {
+func surveyProfile(cfg *settings.Settings, profile string) *settings.Profile {
+	defaultValue := &cfg.App
 	if profile == "default" {
-		return cfg.Project.ProtobufMonorepo
+		return defaultValue
 	}
 
 	d, ok := cfg.Profile[profile]
 	if !ok {
-		return cfg.Project.ProtobufMonorepo
+		return defaultValue
 	}
 
-	return d.Project.ProtobufMonorepo
+	return &d
 }

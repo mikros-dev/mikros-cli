@@ -240,6 +240,11 @@ func editProfile(cfg *settings.Settings, name string) error {
 				Title("VCS path prefix. Enter your VCS path prefix to use for the project:").
 				Value(&profile.Project.ProtobufMonorepo.VcsPath).
 				Validate(ui.IsEmpty("VCS path prefix cannot be empty")),
+
+			huh.NewInput().
+				Title("Auth scopes. Enter the authentication scopes key for HTTP services:").
+				Value(&profile.Project.Templates.Protobuf.CustomAuthName).
+				Validate(ui.IsEmpty("custom auth scopes key cannot be empty")),
 		),
 	).
 		WithAccessible(cfg.UI.Accessible).

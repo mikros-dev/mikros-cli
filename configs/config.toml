@@ -30,14 +30,16 @@
     # like in the go.mod file.
     protobuf_monorepo.vcs_path = ""
 
+    # Sets the key name used by HTTP services to locate the auth handler function
+    # when they execute.
     templates.custom_auth_name = ""
 
 [profile.one]
 project.protobuf.repository_name = ""
 project.protobuf.project_name = ""
-project.protobuf.vcs_patht = ""
+project.protobuf.vcs_path = ""
 
 [profile.two]
 project.protobuf.repository_name = ""
 project.protobuf.project_name = ""
-project.protobuf.vcs_patht = ""
+project.protobuf.vcs_path = ""

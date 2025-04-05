@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
-	"github.com/somatech1/mikros/components/definition"
+	"github.com/mikros-dev/mikros/components/definition"
 
 	service_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/service"
 	"github.com/mikros-dev/mikros-cli/internal/definitions"
@@ -220,25 +220,21 @@ func generateNewServiceArgs(answers *surveyAnswers, externalTemplate *mtemplate.
 
 	switch answers.Type {
 	case definition.ServiceType_gRPC.String():
-		svcInitBlock = fmt.Sprintf(`
-			"grpc": &options.GrpcServiceOptions{
+		svcInitBlock = fmt.Sprintf(`"grpc": &options.GrpcServiceOptions{
 				ProtoServiceDescription: &%spb.%sService_ServiceDesc,
-			},`, svcSnake)
+			},`, svcSnake, strcase.ToCamel(answers.Name))
 
 	case definition.ServiceType_HTTP.String():
-		svcInitBlock = fmt.Sprintf(`
-			"http": &options.HttpServiceOptions{
+		svcInitBlock = fmt.Sprintf(`"http": &options.HttpServiceOptions{
 				ProtoHttpServer: %spb.NewHttpServer(),
 			},`, svcSnake)
 
 	case definition.ServiceType_Native.String():
-		svcInitBlock = `
-			"native": &options.NativeServiceOptions{},
+		svcInitBlock = `"native": &options.NativeServiceOptions{},
 `
 
 	case definition.ServiceType_Script.String():
-		svcInitBlock = `
-			"script": &options.ScriptServiceOptions{},
+		svcInitBlock = `"script": &options.ScriptServiceOptions{},
 `
 
 	default:
