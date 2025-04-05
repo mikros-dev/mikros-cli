@@ -28,7 +28,7 @@ type NewOptions struct {
 
 // New creates a new service template directory with initial source files.
 func New(cfg *settings.Settings, options *NewOptions) error {
-	answers, err := runSurvey(cfg)
+	answers, err := runSurvey(cfg, options.ProtoFilename)
 	if err != nil {
 		return err
 	}
