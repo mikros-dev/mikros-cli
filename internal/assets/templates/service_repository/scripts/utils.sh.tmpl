@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# traverse_services_func will walk the services directory, starting from the
+# repository root directory and executes a function for each service found.
+#
+# A service is a directory with a go.mod file inside.
+#
+# The function executed receives 2 arguments:
+#   - the service name
+#   - the current service path
+traverse_services_func() {
+    local func=$1
+
+    path=$(find_root_git_path)
+    traverse_func $path $func
+}
+
+find_root_git_path() {
+    path=$(git rev-parse --git-dir | tr -d '\n')
+    echo $(dirname $path)
+}
+
+traverse_func() {
+    local path=$1
+    local func=$2
+
+    for d in "$path"/*; do
+        if ! test -d "$d"; then
+            # Not a service directory
+            continue
+        fi
+
+        if test -e "$d"/go.mod; then
+            service_name=$(basename "$d")
+            $func $service_name $d
+        else
+            # Probably a directory with other services
+            traverse_func "$path"/"$d" $func
+        fi
+    done
+}
+
+# service_func will search for the service inside the services directory,
+# starting from the repository root directory, and executes a function for
+# the service, if found.
+#
+# The function executed receives 2 arguments:
+#   - the service name
+#   - the current service path
+service_func() {
+    local service_name=$1
+    local func=$2
+
+    path=$(find_root_git_path)
+    traverse_func_with_condition $path $func $service_name
+}
+
+traverse_func_with_condition() {
+    local path=$1
+    local func=$2
+    local service_name=$3
+
+    for d in "$path"/*; do
+        if ! test -d "$d"; then
+            # Not a service directory
+            continue
+        fi
+
+        if test -e "$d"/go.mod; then
+            name=$(basename "$d")
+
+            if [ "$name" = "$service_name" ]; then
+                $func $service_name $d
+                return
+            fi
+        else
+            traverse_func_with_condition "$path"/"$d" $func $service_name
+        fi
+    done
+}
+
+ensure_mongo_is_running() {
+    if nc -z localhost 27017 > /dev/null 2>&1; then
+        return 0
+    fi
+
+    echo "MongoDB is not running. Make sure you have it running before proceeding."
+    return 1
+}

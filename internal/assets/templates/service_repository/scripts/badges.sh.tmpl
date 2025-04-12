@@ -1,0 +1,70 @@
+#!/bin/bash
+
+. .scripts/utils.sh
+
+if ! command -v anybadge 2>&1 >/dev/null; then
+    echo "anybadge command could not be found"
+    echo "Access the URL 'https://github.com/jongracecox/anybadge' and install in order to use this script."
+    exit 1
+fi
+
+if ! ensure_mongo_is_running; then
+    exit 1
+fi
+
+generate_badge() {
+    local service_name=$1
+    local path=$2
+    local root_path=$(find_root_git_path)
+    local assets_path=$root_path/.assets/badges/$service_name
+
+    echo "generating badges for service '$service_name'"
+
+    if ! test -d "$assets_path"; then
+        mkdir -p $assets_path
+    fi
+
+    # coverage
+    (cd $path &&    \
+        go test -coverprofile=coverage.txt -covermode count ./... > output.txt &&   \
+        grep -q "no test files" output.txt && echo "0%" > coverage_percentage.txt || cat output.txt | awk '{print $5}' > coverage_percentage.txt)
+
+    coverage=`cat $path/coverage_percentage.txt`
+    anybadge -l coverage -v $coverage -c darkgreen -o -f $assets_path/coverage.svg
+    (cd $path && rm -f coverage_percentage.txt coverage.txt output.txt)
+
+    # service type
+    type=`cat $path/service.toml | grep -w types | cut -d = -f 2 | tr -d \"[] | xargs`
+    anybadge -l type -v $type -c darkgoldenrod -o -f $assets_path/type.svg
+
+    # version
+    version=`cat $path/service.toml | grep -w version | cut -d = -f 2 | tr -d \" | xargs`
+    anybadge -l version -v $version -c darkorange -o -f $assets_path/version.svg
+
+    # language
+    language=`cat $path/service.toml | grep -w language | cut -d = -f 2 | tr -d \" | xargs`
+    anybadge -l language -v $language -c darkcyan -o -f $assets_path/language.svg
+
+    # product
+    product=`cat $path/service.toml | grep -w product | cut -d = -f 2 | tr -d \" | xargs`
+    anybadge -l product -v $product -c darkblue -o -f $assets_path/product.svg
+}
+
+while getopts as: opt; do
+    case $opt in
+        a)
+            traverse_services_func generate_badge
+            ;;
+
+        s)
+            service_func ${OPTARG} generate_badge
+            ;;
+
+        ?)
+            echo "unsupported option"
+            exit 1
+            ;;
+    esac
+done
+
+exit 0

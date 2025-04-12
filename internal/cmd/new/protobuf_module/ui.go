@@ -1,4 +1,4 @@
-package protobuf
+package protobuf_module
 
 import (
 	"strings"

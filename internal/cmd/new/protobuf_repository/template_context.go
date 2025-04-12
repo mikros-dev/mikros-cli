@@ -1,4 +1,4 @@
-package project
+package protobuf_repository
 
 type TemplateContext struct {
 	MainPackageName  string

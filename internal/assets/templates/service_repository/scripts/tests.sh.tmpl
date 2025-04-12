@@ -1,0 +1,35 @@
+#!/bin/bash
+
+. .scripts/utils.sh
+
+if ! ensure_mongo_is_running; then
+    exit 1
+fi
+
+execute_service_unit_tests() {
+    local service_name=$1
+    local path=$2
+
+    echo "running '$service_name' unit tests"
+    (cd $path &&
+        go test -v -coverprofile=cover.txt . && go tool cover -html=cover.txt -o cover.html)
+}
+
+while getopts as: opt; do
+    case $opt in
+        a)
+            traverse_services_func execute_service_unit_tests
+            ;;
+
+        s)
+            service_func ${OPTARG} execute_service_unit_tests
+            ;;
+
+        ?)
+            echo "unsupported option"
+            exit 1
+            ;;
+    esac
+done
+
+exit 0

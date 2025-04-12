@@ -7,9 +7,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/project"
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf"
+	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf_module"
+	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf_repository"
 	"github.com/mikros-dev/mikros-cli/internal/cmd/new/service"
+	"github.com/mikros-dev/mikros-cli/internal/cmd/new/service_repository"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
@@ -32,13 +33,13 @@ func newCmdInit(cfg *settings.Settings) {
 
 		switch selected {
 		case "protobuf-monorepo":
-			options := &project.NewOptions{
+			options := &protobuf_repository.NewOptions{
 				NoVCS:   viper.GetBool("project-no-vcs"),
 				Path:    viper.GetString("project-path"),
 				Profile: viper.GetString("project-profile"),
 			}
 
-			if err := project.New(cfg, options); err != nil {
+			if err := protobuf_repository.New(cfg, options); err != nil {
 				fmt.Println("new:", err)
 				return
 			}
@@ -47,12 +48,25 @@ func newCmdInit(cfg *settings.Settings) {
 			fmt.Println("In order to start, execute the following command inside the new project directory:")
 			fmt.Printf("\n$ make setup\n\n")
 
+		case "services-monorepo":
+			options := &service_repository.NewOptions{
+				NoVCS: viper.GetBool("project-no-vcs"),
+				Path:  viper.GetString("project-path"),
+			}
+
+			if err := service_repository.New(cfg, options); err != nil {
+				fmt.Println("new:", err)
+				return
+			}
+
+			fmt.Printf("\n✅ Project successfully created\n\n")
+
 		case "protobuf-module":
-			options := &protobuf.NewOptions{
+			options := &protobuf_module.NewOptions{
 				Profile: viper.GetString("project-profile"),
 			}
 
-			if err := protobuf.New(cfg, options); err != nil {
+			if err := protobuf_module.New(cfg, options); err != nil {
 				fmt.Println("new:", err)
 				return
 			}
@@ -64,7 +78,7 @@ func newCmdInit(cfg *settings.Settings) {
 			}
 
 			if err := service.New(cfg, options); err != nil {
-				fmt.Println(err.Error())
+				fmt.Println("new:", err)
 				return
 			}
 
@@ -105,6 +119,7 @@ func runNewProjectForm(cfg *settings.Settings) (string, error) {
 				Title("Select a project to create or Quit to exit the application").
 				Options(
 					huh.NewOption("Protobuf monorepo", "protobuf-monorepo"),
+					huh.NewOption("Services monorepo", "services-monorepo"),
 					huh.NewOption("Protobuf module file(s)", "protobuf-module"),
 					huh.NewOption("Single service template", "service-template"),
 					huh.NewOption("Quit", "quit"),
