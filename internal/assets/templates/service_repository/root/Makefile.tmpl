@@ -6,7 +6,7 @@ help: ## Show all available options
 # Detect if a specific service is passed
 SERVICE ?=
 
-build: ## Builds all services from the repository or a specific one with SERVICE=name
+services: ## Builds all services from the repository or a specific one with SERVICE=name
 ifeq ($(SERVICE),)
 	@.scripts/services.sh -a
 else
