@@ -55,6 +55,10 @@ func (s *surveyAnswers) TemplateNames() []template.File {
 			Name:      "service",
 			Extension: "go",
 		},
+		{
+			Name:      "README",
+			Extension: "md",
+		},
 	}
 
 	if len(s.Lifecycle) > 0 {

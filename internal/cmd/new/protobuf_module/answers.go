@@ -1,4 +1,4 @@
-package protobuf
+package protobuf_module
 
 type Answers struct {
 	ServiceName string

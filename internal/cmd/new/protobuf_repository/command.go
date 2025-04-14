@@ -1,17 +1,17 @@
-package project
+package protobuf_repository
 
 import (
 	"fmt"
-	"github.com/mikros-dev/mikros-cli/internal/git"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/iancoleman/strcase"
 
-	proto_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/project/proto"
-	root_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/project/root"
-	scripts_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/project/scripts"
+	proto_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/protobuf_repository/proto"
+	root_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/protobuf_repository/root"
+	scripts_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/protobuf_repository/scripts"
+	"github.com/mikros-dev/mikros-cli/internal/git"
 	"github.com/mikros-dev/mikros-cli/internal/golang"
 	"github.com/mikros-dev/mikros-cli/internal/path"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
