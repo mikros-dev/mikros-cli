@@ -1,0 +1,43 @@
+#!/bin/bash
+
+version() {
+  echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
+}
+
+# Main arguments.
+BRANCH_NAME=$1
+SERVICE_PATH=$2
+
+if [[ -z "$BRANCH_NAME" || -z "$SERVICE_PATH" ]]; then
+    echo "Missing check-service-toml.sh script arguments."
+    exit 1
+fi
+
+SERVICE_TOML=$SERVICE_PATH/service.toml
+
+if [ ! -e "$SERVICE_TOML" ]; then
+    echo "'$SERVICE_TOML' file not found, aborting..."
+    exit 1
+fi
+
+GIT_DIFF=$(git fetch origin "$BRANCH_NAME" && git diff --numstat origin/"$BRANCH_NAME" -- "$SERVICE_TOML")
+ADDED_LINES=$(echo "$GIT_DIFF" | sed -r 's/^([^.]+).*$/\1/; s/^[^0-9]*([0-9]+).*$/\1/')
+
+if [[ -n $ADDED_LINES ]]; then
+    echo "'$SERVICE_TOML' file updated"
+else
+    echo "It seems that the '$SERVICE_TOML' is not updated. Please increase the version information."
+    exit 1
+fi
+
+OLD_VERSION=$(git diff origin/"$BRANCH_NAME" "$SERVICE_TOML" | grep "version" | grep "-" | cut -d = -f 2 | tr -d \" | tr -d v | xargs)
+NEW_VERSION=$(git diff origin/"$BRANCH_NAME" "$SERVICE_TOML" | grep "version" | grep "+" | cut -d = -f 2 | tr -d \" | tr -d v | xargs)
+
+if [ $(version "$NEW_VERSION") -gt $(version "$OLD_VERSION") ]; then
+    echo "'$SERVICE_TOML' version increased"
+else
+    echo "Apparently the service version inside '$SERVICE_TOML' is not increased. Please updated it."
+    exit 1
+fi
+
+exit 0

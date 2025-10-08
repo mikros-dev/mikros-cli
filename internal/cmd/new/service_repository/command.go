@@ -152,6 +152,9 @@ func createProjectScriptsTemplates(repositoryPath string, tplCtx *TemplateContex
 		{
 			Name: "utils.sh",
 		},
+		{
+			Name: "check-service-toml.sh",
+		},
 	}
 
 	// Create .scripts folder and dive into it
