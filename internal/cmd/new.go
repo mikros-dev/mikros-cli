@@ -14,46 +14,45 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
-var (
-	newCmd = &cobra.Command{
+func cmd(cfg *settings.Settings) *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "new",
 		Short: "Create a new mikros project",
 		Long:  "new helps creating a new mikros project",
-	}
-)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			selected, err := runNewProjectForm(cfg)
+			if err != nil {
+				return err
+			}
 
-func newCmdInit(cfg *settings.Settings) {
-	setNewCmdFlags()
-	newCmd.Run = func(cmd *cobra.Command, args []string) {
-		selected, err := runNewProjectForm(cfg)
-		if err != nil {
-			fmt.Println("new:", err)
-			return
-		}
+			switch selected {
+			case "protobuf-monorepo":
+				return newProtobufRepository(cfg)
 
-		switch selected {
-		case "protobuf-monorepo":
-			newProtobufRepository(cfg)
+			case "services-monorepo":
+				return newServiceRepository(cfg)
 
-		case "services-monorepo":
-			newServiceRepository(cfg)
+			case "protobuf-module":
+				return newProtobufModule(cfg)
 
-		case "protobuf-module":
-			newProtobufModule(cfg)
+			case "service-template":
+				return newServiceTemplate(cfg)
 
-		case "service-template":
-			newServiceTemplate(cfg)
+			case "quit":
+				// Just quits
+				return nil
+			}
 
-		case "quit":
-			// Just quits
-			return
-		}
+			return nil
+		},
 	}
 
-	rootCmd.AddCommand(newCmd)
+	setNewCmdFlags(cmd)
+
+	return cmd
 }
 
-func newProtobufRepository(cfg *settings.Settings) {
+func newProtobufRepository(cfg *settings.Settings) error {
 	options := &protobuf_repository.NewOptions{
 		NoVCS:   viper.GetBool("project-no-vcs"),
 		Path:    viper.GetString("project-path"),
@@ -61,70 +60,68 @@ func newProtobufRepository(cfg *settings.Settings) {
 	}
 
 	if err := protobuf_repository.New(cfg, options); err != nil {
-		fmt.Println("new:", err)
-		return
+		return err
 	}
 
 	fmt.Printf("\n✅ Project successfully created\n\n")
 	fmt.Println("In order to start, execute the following command inside the new project directory:")
 	fmt.Printf("\n$ make setup\n\n")
+
+	return nil
 }
 
-func newServiceRepository(cfg *settings.Settings) {
+func newServiceRepository(cfg *settings.Settings) error {
 	options := &service_repository.NewOptions{
 		NoVCS: viper.GetBool("project-no-vcs"),
 		Path:  viper.GetString("project-path"),
 	}
 
 	if err := service_repository.New(cfg, options); err != nil {
-		fmt.Println("new:", err)
-		return
+		return err
 	}
 
 	fmt.Printf("\n✅ Project successfully created\n\n")
+	return nil
 }
 
-func newProtobufModule(cfg *settings.Settings) {
+func newProtobufModule(cfg *settings.Settings) error {
 	options := &protobuf.NewOptions{
 		Profile: viper.GetString("project-profile"),
 	}
 
-	if err := protobuf.New(cfg, options); err != nil {
-		fmt.Println("new:", err)
-		return
-	}
+	return protobuf.New(cfg, options)
 }
 
-func newServiceTemplate(cfg *settings.Settings) {
+func newServiceTemplate(cfg *settings.Settings) error {
 	options := &service.NewOptions{
 		Path:          viper.GetString("project-path"),
 		ProtoFilename: viper.GetString("project-proto"),
 	}
 
 	if err := service.New(cfg, options); err != nil {
-		fmt.Println("new:", err)
-		return
+		return err
 	}
 
 	fmt.Printf("\n✅ Service successfully created\n")
+	return nil
 }
 
-func setNewCmdFlags() {
+func setNewCmdFlags(cmd *cobra.Command) {
 	// path option
-	newCmd.Flags().String("path", "", "Sets the output path name (default cwd).")
-	_ = viper.BindPFlag("project-path", newCmd.Flags().Lookup("path"))
+	cmd.Flags().String("path", "", "Sets the output path name (default cwd).")
+	_ = viper.BindPFlag("project-path", cmd.Flags().Lookup("path"))
 
 	// proto file option
-	newCmd.Flags().String("proto", "", "Uses an _api.proto file as source for the service API.")
-	_ = viper.BindPFlag("project-proto", newCmd.Flags().Lookup("proto"))
+	cmd.Flags().String("proto", "", "Uses an _api.proto file as source for the service API.")
+	_ = viper.BindPFlag("project-proto", cmd.Flags().Lookup("proto"))
 
 	// no-vcs option
-	newCmd.Flags().Bool("no-vcs", false, "Disables creating projects with VCS support (default true).")
-	_ = viper.BindPFlag("project-no-vcs", newCmd.Flags().Lookup("no-vcs"))
+	cmd.Flags().Bool("no-vcs", false, "Disables creating projects with VCS support (default true).")
+	_ = viper.BindPFlag("project-no-vcs", cmd.Flags().Lookup("no-vcs"))
 
 	// profile option
-	newCmd.Flags().String("profile", "default", "Sets the profile to use.")
-	_ = viper.BindPFlag("project-profile", newCmd.Flags().Lookup("profile"))
+	cmd.Flags().String("profile", "default", "Sets the profile to use.")
+	_ = viper.BindPFlag("project-profile", cmd.Flags().Lookup("profile"))
 }
 
 func runNewProjectForm(cfg *settings.Settings) (string, error) {

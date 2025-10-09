@@ -164,9 +164,9 @@ func generateTemplateContext(
 	externalService := func() bool {
 		switch answers.Type {
 		case definition.ServiceType_gRPC.String(),
-			definition.ServiceType_HTTP.String(),
+			definition.ServiceType_HTTPSpec.String(),
 			definition.ServiceType_Script.String(),
-			definition.ServiceType_Native.String():
+			definition.ServiceType_Worker.String():
 			return false
 		}
 
@@ -218,13 +218,13 @@ func generateNewServiceArgs(answers *surveyAnswers, externalTemplate *mtemplate.
 				ProtoServiceDescription: &%spb.%sService_ServiceDesc,
 			},`, svcSnake, strcase.ToCamel(answers.Name))
 
-	case definition.ServiceType_HTTP.String():
-		svcInitBlock = fmt.Sprintf(`"http": &options.HttpServiceOptions{
+	case definition.ServiceType_HTTPSpec.String():
+		svcInitBlock = fmt.Sprintf(`"http-spec": &options.HttpSpecServiceOptions{
 				ProtoHttpServer: %spb.NewHttpServer(),
 			},`, svcSnake)
 
-	case definition.ServiceType_Native.String():
-		svcInitBlock = `"native": &options.NativeServiceOptions{},
+	case definition.ServiceType_Worker.String():
+		svcInitBlock = `"worker": &options.WorkerServiceOptions{},
 `
 
 	case definition.ServiceType_Script.String():
