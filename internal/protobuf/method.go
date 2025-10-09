@@ -4,6 +4,7 @@ import (
 	protofile "github.com/emicklei/proto"
 )
 
+// Method represents a method of a protobuf service.
 type Method struct {
 	Name       string
 	InputName  string

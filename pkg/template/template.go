@@ -1,12 +1,14 @@
 package template
 
+// Template represents a structure containing information related to creating
+// and managing custom templates.
 type Template struct {
 	// NewServiceArgs Allows adding custom content for external service kind
 	// when creating the main file of a new template service. It will be available
 	// inside the {{.NewServiceArgs}} inside the template.
 	//
 	// It can be a template string that receives the internal default API and
-	// the custom Api as functions available to be used as well as a short data
+	// the custom API as functions available to be used as well as a short data
 	// context with the following fields:
 	//
 	// {{.ServiceName}}: holding the current service name.
@@ -28,6 +30,8 @@ type Template struct {
 	Templates []*File `json:"templates,omitempty"`
 }
 
+// File represents a file structure with customizable content, name, output path,
+// extension, and additional context.
 type File struct {
 	Content   string `json:"content,omitempty"`
 	Name      string `json:"name,omitempty"`

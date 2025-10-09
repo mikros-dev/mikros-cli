@@ -12,10 +12,12 @@ import (
 	"github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
+// Service represents a service plugin.
 type Service struct {
 	name string
 }
 
+// NewService creates a new Service instance.
 func NewService(path, name string) *Service {
 	return &Service{
 		name: filepath.Join(path, name),
@@ -42,6 +44,7 @@ func (s *Service) exec(args ...string) (string, error) {
 	return out.String(), nil
 }
 
+// GetKind returns the kind of the service.
 func (s *Service) GetKind() (string, error) {
 	out, err := s.exec("-k")
 	if err != nil {
@@ -56,6 +59,7 @@ func (s *Service) GetKind() (string, error) {
 	return d.Kind, nil
 }
 
+// GetSurvey returns the survey configuration associated with the service.
 func (s *Service) GetSurvey() (*survey.Survey, error) {
 	out, err := s.exec("-s")
 	if err != nil {
@@ -70,6 +74,7 @@ func (s *Service) GetSurvey() (*survey.Survey, error) {
 	return d.Survey, nil
 }
 
+// ValidateAnswers validates the provided answers using the service plugin.
 func (s *Service) ValidateAnswers(answers map[string]interface{}) (map[string]interface{}, error) {
 	b, err := json.Marshal(answers)
 	if err != nil {
@@ -92,6 +97,7 @@ func (s *Service) ValidateAnswers(answers map[string]interface{}) (map[string]in
 	return d.Answers, nil
 }
 
+// GetTemplates returns the templates associated with the service plugin.
 func (s *Service) GetTemplates(answers map[string]interface{}) (*template.Template, error) {
 	b, err := json.Marshal(answers)
 	if err != nil {

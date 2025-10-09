@@ -8,5 +8,6 @@
 ## Unignore all dirs
 !*/
 
+.idea
 *.swp
 mikros

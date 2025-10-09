@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/mikros-dev/mikros-cli/internal/cmd/config"
+	"github.com/mikros-dev/mikros-cli/internal/config"
 )
 
 var (

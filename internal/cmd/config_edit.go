@@ -3,9 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/mikros-dev/mikros-cli/internal/config/edit"
 	"github.com/spf13/cobra"
-
-	"github.com/mikros-dev/mikros-cli/internal/cmd/config/edit"
 )
 
 var (

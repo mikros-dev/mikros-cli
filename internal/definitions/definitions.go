@@ -12,7 +12,10 @@ import (
 	"github.com/mikros-dev/mikros/components/definition"
 )
 
+// WriteOptions represents options that modify the behavior of the write
+// operation.
 type WriteOptions struct {
+	// NoValidation determines if validation should be skipped during the operation.
 	NoValidation bool
 }
 
@@ -40,11 +43,7 @@ func Write(path string, defs *definition.Definitions, options ...*WriteOptions) 
 	defer func() { _ = file.Close() }()
 
 	en := toml.NewEncoder(file)
-	if err := en.Encode(defs); err != nil {
-		return err
-	}
-
-	return nil
+	return en.Encode(defs)
 }
 
 // AppendService appends a new section inside the 'service.toml' file to be
@@ -55,11 +54,7 @@ func AppendService(path, serviceType string, serviceDefs interface{}) error {
 	}
 
 	filename := filepath.Join(path, "service.toml")
-	if err := writeServiceDefinitions(filename, serviceType, serviceDefs); err != nil {
-		return err
-	}
-
-	return nil
+	return writeServiceDefinitions(filename, serviceType, serviceDefs)
 }
 
 func writeServiceDefinitions(filename, name string, defs interface{}) error {
@@ -75,11 +70,7 @@ func writeServiceDefinitions(filename, name string, defs interface{}) error {
 	}
 
 	en := toml.NewEncoder(file)
-	if err := en.Encode(defs); err != nil {
-		return err
-	}
-
-	return nil
+	return en.Encode(defs)
 }
 
 // AppendFeature appends a new section inside the 'service.toml' file to be
@@ -112,10 +103,7 @@ func AppendFeature(path, featureName string, featureDefs interface{}) error {
 		defs["features"] = features
 	}
 
-	if err := appendFeatureDefinitions(filename, defs); err != nil {
-		return err
-	}
-	return nil
+	return appendFeatureDefinitions(filename, defs)
 }
 
 func loadCurrentFile(path string) (map[string]interface{}, error) {
@@ -151,9 +139,5 @@ func appendFeatureDefinitions(filename string, defs interface{}) error {
 	defer func() { _ = file.Close() }()
 
 	en := toml.NewEncoder(file)
-	if err := en.Encode(defs); err != nil {
-		return err
-	}
-
-	return nil
+	return en.Encode(defs)
 }

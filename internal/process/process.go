@@ -11,6 +11,6 @@ func Exec(args ...string) ([]byte, error) {
 		return nil, errors.New("can't execute a nil command")
 	}
 
-	cmd := exec.Command(args[0], args[1:]...) //nolint
+	cmd := exec.Command(args[0], args[1:]...)
 	return cmd.CombinedOutput()
 }

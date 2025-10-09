@@ -6,13 +6,14 @@ import (
 	"text/template"
 )
 
+// ParseBlock parses a block of text using a template.
 func ParseBlock(block string, api map[string]interface{}, data interface{}) (string, error) {
-	helperApi := defaultApi
+	helperAPI := defaultAPI
 	for k, v := range api {
-		helperApi[k] = v
+		helperAPI[k] = v
 	}
 
-	tpl, err := template.New("custom").Funcs(helperApi).Parse(block)
+	tpl, err := template.New("custom").Funcs(helperAPI).Parse(block)
 	if err != nil {
 		return "", err
 	}

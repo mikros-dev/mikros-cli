@@ -13,7 +13,7 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
-var defaultApi = template.FuncMap{
+var defaultAPI = template.FuncMap{
 	"toCamel":      strcase.ToCamel,
 	"toSnake":      strcase.ToSnake,
 	"toUpperSnake": strcase.ToScreamingSnake,
@@ -21,17 +21,19 @@ var defaultApi = template.FuncMap{
 	"toKebab":      strcase.ToKebab,
 }
 
+// Session is the template session.
 type Session struct {
 	loadedTemplates []*Info
 }
 
+// Info is the template information.
 type Info struct {
 	template *template.Template
 	name     File
 	context  interface{}
 }
 
-// File is representation of a template file to be processed when
+// File is the representation of a template file to be processed when
 // creating new template services.
 type File struct {
 	// Name is the template name without its extensions (.tmpl). It is used
@@ -46,11 +48,13 @@ type File struct {
 	Extension string
 }
 
+// LoadOptions is the template loading options.
 type LoadOptions struct {
 	TemplateNames []File
-	Api           map[string]interface{}
+	API           map[string]interface{}
 }
 
+// NewSessionFromFiles creates a new template session from a set of files.
 func NewSessionFromFiles(options *LoadOptions, files embed.FS) (*Session, error) {
 	dirFiles, err := files.ReadDir(".")
 	if err != nil {
@@ -92,12 +96,14 @@ func NewSessionFromFiles(options *LoadOptions, files embed.FS) (*Session, error)
 	}, nil
 }
 
+// Data is the template data.
 type Data struct {
 	FileName string
 	Content  []byte
 	Context  interface{}
 }
 
+// NewSessionFromData creates a new template session from a set of data.
 func NewSessionFromData(options *LoadOptions, files []*Data) (*Session, error) {
 	var templates []*Info
 	for _, file := range files {
@@ -140,18 +146,16 @@ func filenameWithoutExtension(filename string) string {
 }
 
 func loadTemplate(name string, data []byte, options *LoadOptions) (*template.Template, error) {
-	var (
-		helperApi = defaultApi
-	)
+	var helperAPI = defaultAPI
 
-	helperApi["templateName"] = func() string {
+	helperAPI["templateName"] = func() string {
 		return name
 	}
-	for call, function := range options.Api {
-		helperApi[call] = function
+	for call, function := range options.API {
+		helperAPI[call] = function
 	}
 
-	tpl, err := parse(name, data, helperApi)
+	tpl, err := parse(name, data, helperAPI)
 	if err != nil {
 		return nil, err
 	}
@@ -159,8 +163,8 @@ func loadTemplate(name string, data []byte, options *LoadOptions) (*template.Tem
 	return tpl, nil
 }
 
-func parse(key string, data []byte, helperApi template.FuncMap) (*template.Template, error) {
-	t, err := template.New(key).Funcs(helperApi).Parse(string(data))
+func parse(key string, data []byte, helperAPI template.FuncMap) (*template.Template, error) {
+	t, err := template.New(key).Funcs(helperAPI).Parse(string(data))
 	if err != nil {
 		return nil, err
 	}
@@ -168,6 +172,7 @@ func parse(key string, data []byte, helperApi template.FuncMap) (*template.Templ
 	return t, nil
 }
 
+// ExecuteTemplates executes the templates in the session.
 func (s *Session) ExecuteTemplates(ctx interface{}) ([]*GeneratedTemplate, error) {
 	var gen []*GeneratedTemplate
 
@@ -191,6 +196,7 @@ func (s *Session) ExecuteTemplates(ctx interface{}) ([]*GeneratedTemplate, error
 	return gen, nil
 }
 
+// GeneratedTemplate is the generated template.
 type GeneratedTemplate struct {
 	data *bytes.Buffer
 	name string
@@ -211,10 +217,12 @@ func newGeneratedTemplate(data *bytes.Buffer, name File) *GeneratedTemplate {
 	}
 }
 
+// Filename returns the generated template filename.
 func (g *GeneratedTemplate) Filename() string {
 	return g.name
 }
 
+// Content returns the generated template content.
 func (g *GeneratedTemplate) Content() []byte {
 	return g.data.Bytes()
 }

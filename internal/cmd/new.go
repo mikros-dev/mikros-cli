@@ -7,10 +7,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf_module"
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf_repository"
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/service"
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/service_repository"
+	"github.com/mikros-dev/mikros-cli/internal/scaffold/protobuf"
+	protobuf_repository "github.com/mikros-dev/mikros-cli/internal/scaffold/repository/protobuf"
+	service_repository "github.com/mikros-dev/mikros-cli/internal/scaffold/repository/service"
+	"github.com/mikros-dev/mikros-cli/internal/scaffold/service"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
@@ -33,56 +33,16 @@ func newCmdInit(cfg *settings.Settings) {
 
 		switch selected {
 		case "protobuf-monorepo":
-			options := &protobuf_repository.NewOptions{
-				NoVCS:   viper.GetBool("project-no-vcs"),
-				Path:    viper.GetString("project-path"),
-				Profile: viper.GetString("project-profile"),
-			}
-
-			if err := protobuf_repository.New(cfg, options); err != nil {
-				fmt.Println("new:", err)
-				return
-			}
-
-			fmt.Printf("\n✅ Project successfully created\n\n")
-			fmt.Println("In order to start, execute the following command inside the new project directory:")
-			fmt.Printf("\n$ make setup\n\n")
+			newProtobufRepository(cfg)
 
 		case "services-monorepo":
-			options := &service_repository.NewOptions{
-				NoVCS: viper.GetBool("project-no-vcs"),
-				Path:  viper.GetString("project-path"),
-			}
-
-			if err := service_repository.New(cfg, options); err != nil {
-				fmt.Println("new:", err)
-				return
-			}
-
-			fmt.Printf("\n✅ Project successfully created\n\n")
+			newServiceRepository(cfg)
 
 		case "protobuf-module":
-			options := &protobuf_module.NewOptions{
-				Profile: viper.GetString("project-profile"),
-			}
-
-			if err := protobuf_module.New(cfg, options); err != nil {
-				fmt.Println("new:", err)
-				return
-			}
+			newProtobufModule(cfg)
 
 		case "service-template":
-			options := &service.NewOptions{
-				Path:          viper.GetString("project-path"),
-				ProtoFilename: viper.GetString("project-proto"),
-			}
-
-			if err := service.New(cfg, options); err != nil {
-				fmt.Println("new:", err)
-				return
-			}
-
-			fmt.Printf("\n✅ Service successfully created\n")
+			newServiceTemplate(cfg)
 
 		case "quit":
 			// Just quits
@@ -91,6 +51,62 @@ func newCmdInit(cfg *settings.Settings) {
 	}
 
 	rootCmd.AddCommand(newCmd)
+}
+
+func newProtobufRepository(cfg *settings.Settings) {
+	options := &protobuf_repository.NewOptions{
+		NoVCS:   viper.GetBool("project-no-vcs"),
+		Path:    viper.GetString("project-path"),
+		Profile: viper.GetString("project-profile"),
+	}
+
+	if err := protobuf_repository.New(cfg, options); err != nil {
+		fmt.Println("new:", err)
+		return
+	}
+
+	fmt.Printf("\n✅ Project successfully created\n\n")
+	fmt.Println("In order to start, execute the following command inside the new project directory:")
+	fmt.Printf("\n$ make setup\n\n")
+}
+
+func newServiceRepository(cfg *settings.Settings) {
+	options := &service_repository.NewOptions{
+		NoVCS: viper.GetBool("project-no-vcs"),
+		Path:  viper.GetString("project-path"),
+	}
+
+	if err := service_repository.New(cfg, options); err != nil {
+		fmt.Println("new:", err)
+		return
+	}
+
+	fmt.Printf("\n✅ Project successfully created\n\n")
+}
+
+func newProtobufModule(cfg *settings.Settings) {
+	options := &protobuf.NewOptions{
+		Profile: viper.GetString("project-profile"),
+	}
+
+	if err := protobuf.New(cfg, options); err != nil {
+		fmt.Println("new:", err)
+		return
+	}
+}
+
+func newServiceTemplate(cfg *settings.Settings) {
+	options := &service.NewOptions{
+		Path:          viper.GetString("project-path"),
+		ProtoFilename: viper.GetString("project-proto"),
+	}
+
+	if err := service.New(cfg, options); err != nil {
+		fmt.Println("new:", err)
+		return
+	}
+
+	fmt.Printf("\n✅ Service successfully created\n")
 }
 
 func setNewCmdFlags() {
