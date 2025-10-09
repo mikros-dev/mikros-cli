@@ -8,6 +8,8 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
+// Context represents the configuration and metadata for a generated service
+// or package.
 type Context struct {
 	httpService      bool
 	IsAuthenticated  bool
@@ -39,9 +41,9 @@ func generateTemplateContext(cfg *settings.Settings, answers *Answers, profileNa
 			rpcs = generateCRUDRPCs(entityName)
 		}
 	}
-	if answers.Http != nil {
-		rpcs = answers.Http.RPCs
-		isAuthenticated = answers.Http.IsAuthenticated
+	if answers.HTTP != nil {
+		rpcs = answers.HTTP.RPCs
+		isAuthenticated = answers.HTTP.IsAuthenticated
 	}
 
 	return &Context{
@@ -73,14 +75,17 @@ func projectProfile(cfg *settings.Settings, profileName string) *settings.Profil
 	return &d
 }
 
+// IsHTTPService returns true if the service is an HTTP service.
 func (c *Context) IsHTTPService() bool {
 	return c.httpService
 }
 
+// Extension returns the file extension for the generated template.
 func (c *Context) Extension() string {
 	return "proto"
 }
 
+// RPC represents a protobuf RPC.
 type RPC struct {
 	IsAuthenticated bool
 	Name            string
@@ -123,9 +128,7 @@ func generateCRUDRPCs(entityName string) []*RPC {
 }
 
 func generateRPCs(names []string) []*RPC {
-	var (
-		rpcs []*RPC
-	)
+	var rpcs []*RPC
 
 	for _, name := range names {
 		messageName := strcase.ToCamel(name)
@@ -139,6 +142,7 @@ func generateRPCs(names []string) []*RPC {
 	return rpcs
 }
 
+// HasBody returns true if the RPC has a body.
 func (m *RPC) HasBody() bool {
 	return m.HTTPMethod == "post" || m.HTTPMethod == "put"
 }

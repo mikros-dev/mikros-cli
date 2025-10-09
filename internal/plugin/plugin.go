@@ -9,6 +9,8 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
+// GetNewServiceKinds returns the list of new service kinds available in the
+// plugins directory.
 func GetNewServiceKinds(cfg *settings.Settings) ([]string, error) {
 	var (
 		basePath = cfg.Paths.Plugins.Services
@@ -41,6 +43,8 @@ func GetNewServiceKinds(cfg *settings.Settings) ([]string, error) {
 	return types, nil
 }
 
+// GetFeaturesUINames returns the list of feature names available in the
+// plugins directory.
 func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 	var (
 		basePath = cfg.Paths.Plugins.Features
@@ -73,10 +77,9 @@ func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 	return names, nil
 }
 
+// GetServicePlugin returns the plugin for the given kind.
 func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, error) {
-	var (
-		basePath = cfg.Paths.Plugins.Services
-	)
+	var basePath = cfg.Paths.Plugins.Services
 
 	if !path.FindPath(basePath) {
 		return nil, nil
@@ -106,10 +109,9 @@ func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, err
 	return nil, nil
 }
 
+// GetFeaturePlugin returns the plugin for the given name.
 func GetFeaturePlugin(cfg *settings.Settings, name string) (*client.Feature, error) {
-	var (
-		basePath = cfg.Paths.Plugins.Features
-	)
+	var basePath = cfg.Paths.Plugins.Features
 
 	if !path.FindPath(basePath) {
 		return nil, nil

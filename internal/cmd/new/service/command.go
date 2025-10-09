@@ -21,8 +21,13 @@ import (
 	mtemplate "github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
+// NewOptions holds configuration options for creating a service template.
 type NewOptions struct {
-	Path          string
+	// Path specifies the target directory for the service files.
+	Path string
+
+	// ProtoFilename defines the location of the protobuf file used for the
+	// service.
 	ProtoFilename string
 }
 
@@ -49,17 +54,11 @@ func New(cfg *settings.Settings, options *NewOptions) error {
 		}
 	}
 
-	if err := generateTemplates(options, answers, svc); err != nil {
-		return err
-	}
-
-	return nil
+	return generateTemplates(options, answers, svc)
 }
 
 func generateTemplates(options *NewOptions, answers *surveyAnswers, svc *client.Service) error {
-	var (
-		destinationPath = filepath.Join(options.Path, strings.ToLower(answers.Name))
-	)
+	var destinationPath = filepath.Join(options.Path, strings.ToLower(answers.Name))
 
 	// Set the project base path
 	if destinationPath == "" {
@@ -98,11 +97,7 @@ func generateTemplates(options *NewOptions, answers *surveyAnswers, svc *client.
 	}
 
 	// creates go source templates
-	if err := generateSources(options, answers, svc); err != nil {
-		return err
-	}
-
-	return nil
+	return generateSources(options, answers, svc)
 }
 
 func writeServiceDefinitions(path string, answers *surveyAnswers) error {
@@ -150,14 +145,14 @@ func generateSources(options *NewOptions, answers *surveyAnswers, svc *client.Se
 		return err
 	}
 
-	if err := createServiceTemplates(answers.TemplateNames(), tplCtx, externalTemplate); err != nil {
-		return err
-	}
-
-	return nil
+	return createServiceTemplates(answers.TemplateNames(), tplCtx, externalTemplate)
 }
 
-func generateTemplateContext(options *NewOptions, answers *surveyAnswers, externalTemplate *mtemplate.Template) (TemplateContext, error) {
+func generateTemplateContext(
+	options *NewOptions,
+	answers *surveyAnswers,
+	externalTemplate *mtemplate.Template,
+) (TemplateContext, error) {
 	var (
 		svcDefs = answers.ServiceDefinitions()
 		defs    interface{}
@@ -238,39 +233,52 @@ func generateNewServiceArgs(answers *surveyAnswers, externalTemplate *mtemplate.
 `
 
 	default:
-		if externalTemplate != nil {
-			var (
-				svcDefs = answers.ServiceDefinitions()
-				defs    interface{}
-			)
-
-			if svcDefs != nil {
-				defs = svcDefs.Definitions()
-			}
-
-			if args := externalTemplate.NewServiceArgs; args != "" {
-				data := struct {
-					ServiceName              string
-					ServiceType              string
-					ServiceTypeCustomAnswers interface{}
-				}{
-					ServiceName:              answers.Type,
-					ServiceType:              answers.Name,
-					ServiceTypeCustomAnswers: defs,
-				}
-
-				block, err := template.ParseBlock(args, nil, data)
-				if err != nil {
-					return "", err
-				}
-				svcInitBlock = block
-			}
+		b, err := externalTemplateInitBlock(answers, externalTemplate)
+		if err != nil {
+			return "", err
 		}
+		svcInitBlock = b
 	}
 
 	return fmt.Sprintf(`Service: map[string]options.ServiceOptions{
 			%s
 		},`, svcInitBlock), nil
+}
+
+func externalTemplateInitBlock(answers *surveyAnswers, externalTemplate *mtemplate.Template) (string, error) {
+	if externalTemplate == nil {
+		return "", nil
+	}
+
+	var (
+		svcDefs   = answers.ServiceDefinitions()
+		defs      interface{}
+		initBlock string
+	)
+
+	if svcDefs != nil {
+		defs = svcDefs.Definitions()
+	}
+
+	if args := externalTemplate.NewServiceArgs; args != "" {
+		data := struct {
+			ServiceName              string
+			ServiceType              string
+			ServiceTypeCustomAnswers interface{}
+		}{
+			ServiceName:              answers.Type,
+			ServiceType:              answers.Name,
+			ServiceTypeCustomAnswers: defs,
+		}
+
+		block, err := template.ParseBlock(args, nil, data)
+		if err != nil {
+			return "", err
+		}
+		initBlock = block
+	}
+
+	return initBlock, nil
 }
 
 func generateImports(answers *surveyAnswers) map[string][]ImportContext {
@@ -299,7 +307,11 @@ func generateImports(answers *surveyAnswers) map[string][]ImportContext {
 	return imports
 }
 
-func createServiceTemplates(filenames []template.File, tplContext TemplateContext, externalTemplate *mtemplate.Template) error {
+func createServiceTemplates(
+	filenames []template.File,
+	tplContext TemplateContext,
+	externalTemplate *mtemplate.Template,
+) error {
 	// Execute our templates
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
 		TemplateNames: filenames,

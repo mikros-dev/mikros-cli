@@ -18,23 +18,21 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/template"
 )
 
+// NewOptions represents the options for the New command.
 type NewOptions struct {
 	NoVCS   bool
 	Path    string
 	Profile string
 }
 
+// New creates a new protobuf repository based on the provided settings.
 func New(cfg *settings.Settings, options *NewOptions) error {
 	answers, err := runSurvey(cfg, options.Profile)
 	if err != nil {
 		return err
 	}
 
-	if err := generateProject(options, answers); err != nil {
-		return err
-	}
-
-	return nil
+	return generateProject(options, answers)
 }
 
 func generateProject(options *NewOptions, answers *surveyAnswers) error {
@@ -88,9 +86,7 @@ func createProjectDirectory(options *NewOptions, repositoryName string) (string,
 }
 
 func projectBasePath(options *NewOptions, repositoryName string) (string, error) {
-	var (
-		name = strings.ToLower(strcase.ToKebab(repositoryName))
-	)
+	var name = strings.ToLower(strcase.ToKebab(repositoryName))
 
 	if options.Path == "" {
 		cwd, err := os.Getwd()
@@ -123,11 +119,7 @@ func createProjectTemplates(answer *surveyAnswers, repositoryPath string) error 
 		return err
 	}
 
-	if err := createProjectProtoTemplates(repositoryPath, tplCtx); err != nil {
-		return err
-	}
-
-	return nil
+	return createProjectProtoTemplates(repositoryPath, tplCtx)
 }
 
 func createProjectRootTemplates(tplCtx *TemplateContext) error {
@@ -153,11 +145,7 @@ func createProjectRootTemplates(tplCtx *TemplateContext) error {
 		return err
 	}
 
-	if err := runTemplates(session, tplCtx); err != nil {
-		return err
-	}
-
-	return nil
+	return runTemplates(session, tplCtx)
 }
 
 func createProjectScriptsTemplates(repositoryPath string, tplCtx *TemplateContext) error {
@@ -237,11 +225,7 @@ func createProjectProtoTemplates(repositoryPath string, tplCtx *TemplateContext)
 		return err
 	}
 
-	if err := runTemplates(session, tplCtx); err != nil {
-		return err
-	}
-
-	return nil
+	return runTemplates(session, tplCtx)
 }
 
 func runTemplates(session *template.Session, context interface{}) error {

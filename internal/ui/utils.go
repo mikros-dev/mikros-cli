@@ -6,6 +6,7 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
+// Alert displays a confirmation dialog with the provided text.
 func Alert(cfg *settings.Settings, text string) error {
 	form := huh.NewForm(
 		huh.NewGroup(
@@ -18,9 +19,5 @@ func Alert(cfg *settings.Settings, text string) error {
 		WithAccessible(cfg.UI.Accessible).
 		WithTheme(cfg.GetTheme())
 
-	if err := form.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return form.Run()
 }

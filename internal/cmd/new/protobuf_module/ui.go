@@ -41,7 +41,13 @@ func chooseService(cfg *settings.Settings) (string, string, error) {
 	return serviceName, serviceKind, nil
 }
 
-func runGrpcForm(cfg *settings.Settings) (string, bool, []string, error) {
+type gRPCForm struct {
+	EntityName  string
+	DefaultRPCs bool
+	CustomRPCs  []string
+}
+
+func runGrpcForm(cfg *settings.Settings) (*gRPCForm, error) {
 	var (
 		entityName  string
 		defaultRPCs = true
@@ -69,20 +75,22 @@ func runGrpcForm(cfg *settings.Settings) (string, bool, []string, error) {
 		WithTheme(cfg.GetTheme())
 
 	if err := form.Run(); err != nil {
-		return "", false, nil, err
+		return nil, err
 	}
 
 	if text != "" {
 		customRPCs = strings.Split(text, "\n")
 	}
 
-	return entityName, defaultRPCs, customRPCs, nil
+	return &gRPCForm{
+		EntityName:  entityName,
+		DefaultRPCs: defaultRPCs,
+		CustomRPCs:  customRPCs,
+	}, nil
 }
 
-func runHttpForm(cfg *settings.Settings) (bool, []*RPC, error) {
-	var (
-		isAuthenticated bool
-	)
+func runHTTPForm(cfg *settings.Settings) (bool, []*RPC, error) {
+	var isAuthenticated bool
 
 	form := huh.NewForm(
 		huh.NewGroup(
@@ -98,7 +106,7 @@ func runHttpForm(cfg *settings.Settings) (bool, []*RPC, error) {
 		return false, nil, nil
 	}
 
-	rpcs, err := runHttpRPCForm(cfg, isAuthenticated)
+	rpcs, err := runHTTPRPCForm(cfg, isAuthenticated)
 	if err != nil {
 		return false, nil, nil
 	}
@@ -106,69 +114,18 @@ func runHttpForm(cfg *settings.Settings) (bool, []*RPC, error) {
 	return isAuthenticated, rpcs, nil
 }
 
-func runHttpRPCForm(cfg *settings.Settings, isAuthenticated bool) ([]*RPC, error) {
-	var (
-		rpcs []*RPC
-	)
+func runHTTPRPCForm(cfg *settings.Settings, isAuthenticated bool) ([]*RPC, error) {
+	var rpcs []*RPC
 
 	for {
-		var (
-			name           string
-			method         string
-			endpoint       string
-			continueAdding bool
-		)
-
-		form := huh.NewForm(
-			huh.NewGroup(
-				huh.NewInput().
-					Title("Name. Enter the RPC name:").
-					Value(&name).
-					Validate(ui.IsEmpty("RPC name cannot be empty")),
-
-				huh.NewSelect[string]().
-					Title("Method. Enter the RPC method:").
-					Options(
-						huh.NewOption("GET", "get"),
-						huh.NewOption("POST", "post"),
-						huh.NewOption("PUT", "put"),
-						huh.NewOption("DELETE", "delete"),
-						huh.NewOption("PATCH", "patch"),
-					).
-					Value(&method),
-
-				huh.NewInput().
-					Title("Endpoint. Enter the RPC endpoint:").
-					Value(&endpoint).
-					Validate(ui.IsEmpty("RPC endpoint cannot be empty")),
-			),
-		).
-			WithAccessible(cfg.UI.Accessible).
-			WithTheme(cfg.GetTheme())
-
-		if err := form.Run(); err != nil {
+		rpc, err := promptSingleHTTPRPC(cfg, isAuthenticated)
+		if err != nil {
 			return nil, err
 		}
+		rpcs = append(rpcs, rpc)
 
-		rpcs = append(rpcs, &RPC{
-			IsAuthenticated: isAuthenticated,
-			Name:            name,
-			HTTPMethod:      method,
-			HTTPEndpoint:    endpoint,
-			AuthArgMode:     getAuthArgMode(method),
-		})
-
-		confirm := huh.NewForm(
-			huh.NewGroup(
-				huh.NewConfirm().
-					Title("Do you want to add a new RPC?").
-					Value(&continueAdding),
-			),
-		).
-			WithAccessible(cfg.UI.Accessible).
-			WithTheme(cfg.GetTheme())
-
-		if err := confirm.Run(); err != nil {
+		continueAdding, err := confirmAddMoreRPC(cfg)
+		if err != nil {
 			return nil, err
 		}
 		if !continueAdding {
@@ -177,4 +134,71 @@ func runHttpRPCForm(cfg *settings.Settings, isAuthenticated bool) ([]*RPC, error
 	}
 
 	return rpcs, nil
+}
+
+func promptSingleHTTPRPC(cfg *settings.Settings, isAuthenticated bool) (*RPC, error) {
+	var (
+		name     string
+		method   string
+		endpoint string
+	)
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Name. Enter the RPC name:").
+				Value(&name).
+				Validate(ui.IsEmpty("RPC name cannot be empty")),
+
+			huh.NewSelect[string]().
+				Title("Method. Enter the RPC method:").
+				Options(
+					huh.NewOption("GET", "get"),
+					huh.NewOption("POST", "post"),
+					huh.NewOption("PUT", "put"),
+					huh.NewOption("DELETE", "delete"),
+					huh.NewOption("PATCH", "patch"),
+				).
+				Value(&method),
+
+			huh.NewInput().
+				Title("Endpoint. Enter the RPC endpoint:").
+				Value(&endpoint).
+				Validate(ui.IsEmpty("RPC endpoint cannot be empty")),
+		),
+	).
+		WithAccessible(cfg.UI.Accessible).
+		WithTheme(cfg.GetTheme())
+
+	if err := form.Run(); err != nil {
+		return nil, err
+	}
+
+	return &RPC{
+		IsAuthenticated: isAuthenticated,
+		Name:            name,
+		HTTPMethod:      method,
+		HTTPEndpoint:    endpoint,
+		AuthArgMode:     getAuthArgMode(method),
+	}, nil
+}
+
+func confirmAddMoreRPC(cfg *settings.Settings) (bool, error) {
+	var continueAdding bool
+
+	confirm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to add a new RPC?").
+				Value(&continueAdding),
+		),
+	).
+		WithAccessible(cfg.UI.Accessible).
+		WithTheme(cfg.GetTheme())
+
+	if err := confirm.Run(); err != nil {
+		return false, err
+	}
+
+	return continueAdding, nil
 }

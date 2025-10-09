@@ -9,9 +9,9 @@ import (
 	"github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
-// ServiceApi is the API that a service plugin must implement to be supported
+// ServiceAPI is the API that a service plugin must implement to be supported
 // by mikros CLI.
-type ServiceApi interface {
+type ServiceAPI interface {
 	// Kind must return the new service type for services.
 	Kind() string
 
@@ -33,12 +33,12 @@ type ServiceApi interface {
 // Service is the service plugin object that provides the channel that mikros
 // CLI recognizes as a plugin.
 type Service struct {
-	api ServiceApi
+	api ServiceAPI
 }
 
 // NewService creates a Service object by receiving an object which must
-// implement the ServiceApi interface.
-func NewService(api ServiceApi) (*Service, error) {
+// implement the ServiceAPI interface.
+func NewService(api ServiceAPI) (*Service, error) {
 	if api == nil {
 		return nil, errors.New("api cannot be nil")
 	}
@@ -94,9 +94,5 @@ func (s *Service) Run() error {
 		return errors.New("no valid command specified")
 	}
 
-	if err := encoder.Output(); err != nil {
-		return err
-	}
-
-	return nil
+	return encoder.Output()
 }

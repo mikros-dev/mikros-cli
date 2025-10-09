@@ -18,6 +18,8 @@ type Survey struct {
 	FollowUp []*FollowUpSurvey `json:"sub_survey,omitempty"`
 }
 
+// Question defines the structure for a survey question, containing its
+// attributes such as name, prompt, and messaging.
 type Question struct {
 	Required     bool       `json:"required"`
 	ConfirmAfter bool       `json:"confirm_after"`
@@ -28,19 +30,26 @@ type Question struct {
 	Options      []string   `json:"options,omitempty"`
 }
 
+// FollowUpSurvey defines a structure for secondary surveys triggered by
+// specific conditions during a primary survey.
 type FollowUpSurvey struct {
 	Name      string             `json:"name,omitempty" validate:"required"`
 	Condition *QuestionCondition `json:"condition,omitempty" validate:"required"`
 	Survey    *Survey            `json:"survey,omitempty" validate:"-"`
 }
 
+// QuestionCondition defines a structure used to represent a condition for
+// triggering specific survey actions.
 type QuestionCondition struct {
 	Name  string      `json:"name,omitempty"`
 	Value interface{} `json:"value,omitempty"`
 }
 
+// PromptKind represents the type of prompt used in a survey or user interaction
+// mechanism.
 type PromptKind int
 
+// Supported prompt types.
 const (
 	PromptInput PromptKind = iota + 1
 	PromptSelect

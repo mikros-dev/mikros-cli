@@ -9,6 +9,7 @@ import (
 	"github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
+// PluginData represents the data that a plugin must return to the CLI.
 type PluginData struct {
 	Name     string                 `json:"name,omitempty"`
 	UIName   string                 `json:"ui_name,omitempty"`
@@ -19,6 +20,7 @@ type PluginData struct {
 	Error    string                 `json:"error,omitempty"`
 }
 
+// Output prints the data to the CLI.
 func (p *PluginData) Output() error {
 	b, err := json.Marshal(p)
 	if err != nil {
@@ -29,6 +31,7 @@ func (p *PluginData) Output() error {
 	return nil
 }
 
+// DecodePluginData decodes the data from the CLI.
 func DecodePluginData(in string) (*PluginData, error) {
 	var (
 		d = json.NewDecoder(strings.NewReader(in))

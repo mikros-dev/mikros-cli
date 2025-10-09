@@ -4,6 +4,7 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
+// New manipulates the configuration file.
 func New() error {
 	cfg, err := settings.Load()
 	if err != nil {

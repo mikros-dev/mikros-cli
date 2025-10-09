@@ -15,10 +15,12 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/template"
 )
 
+// NewOptions represents the options for the New command.
 type NewOptions struct {
 	Profile string
 }
 
+// New initializes and generates required protobuf templates.
 func New(cfg *settings.Settings, options *NewOptions) error {
 	name, kind, err := chooseService(cfg)
 	if err != nil {
@@ -32,34 +34,30 @@ func New(cfg *settings.Settings, options *NewOptions) error {
 
 	switch kind {
 	case "grpc":
-		entity, defaultRPCs, customRPCs, err := runGrpcForm(cfg)
+		form, err := runGrpcForm(cfg)
 		if err != nil {
 			return err
 		}
 
 		answers.Grpc = &GrpcAnswers{
-			EntityName:     entity,
-			UseDefaultRPCs: defaultRPCs,
-			CustomRPCs:     customRPCs,
+			EntityName:     form.EntityName,
+			UseDefaultRPCs: form.DefaultRPCs,
+			CustomRPCs:     form.CustomRPCs,
 		}
 
 	case "http":
-		isAuthenticated, rpcs, err := runHttpForm(cfg)
+		isAuthenticated, rpcs, err := runHTTPForm(cfg)
 		if err != nil {
 			return err
 		}
 
-		answers.Http = &HttpAnswers{
+		answers.HTTP = &HTTPAnswers{
 			IsAuthenticated: isAuthenticated,
 			RPCs:            rpcs,
 		}
 	}
 
-	if err := generateTemplates(cfg, answers, options); err != nil {
-		return err
-	}
-
-	return nil
+	return generateTemplates(cfg, answers, options)
 }
 
 func generateTemplates(cfg *settings.Settings, answers *Answers, options *NewOptions) error {
@@ -84,11 +82,7 @@ func generateTemplates(cfg *settings.Settings, answers *Answers, options *NewOpt
 		}
 	}()
 
-	if err := generateProtobufFiles(cfg, templateBasePath, answers, options); err != nil {
-		return err
-	}
-
-	return nil
+	return generateProtobufFiles(cfg, templateBasePath, answers, options)
 }
 
 func getTemplatesBasePath(serviceName string) (string, error) {
@@ -182,11 +176,7 @@ func generateProtobufFiles(cfg *settings.Settings, basePath string, answers *Ans
 	}
 
 	ctx := generateTemplateContext(cfg, answers, options.Profile)
-	if err := runTemplates(basePath, session, ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return runTemplates(basePath, session, ctx)
 }
 
 func runTemplates(basePath string, session *template.Session, context interface{}) error {

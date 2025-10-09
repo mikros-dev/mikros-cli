@@ -14,37 +14,56 @@ import (
 )
 
 func runSurvey(cfg *settings.Settings, protoFilename string) (*surveyAnswers, error) {
-	var (
-		supportedTypes = []huh.Option[string]{
-			huh.NewOption(definition.ServiceType_gRPC.String(), definition.ServiceType_gRPC.String()),
-			huh.NewOption(definition.ServiceType_HTTP.String(), definition.ServiceType_HTTP.String()),
-			huh.NewOption(definition.ServiceType_Native.String(), definition.ServiceType_Native.String()),
-			huh.NewOption(definition.ServiceType_Script.String(), definition.ServiceType_Script.String()),
-		}
-	)
-
 	answers, err := newSurveyAnswers(protoFilename)
 	if err != nil {
 		return nil, err
 	}
-	
-	newTypes, err := plugin.GetNewServiceKinds(cfg)
+
+	questions, err := getBaseQuestions(answers, cfg)
 	if err != nil {
 		return nil, err
 	}
-	for _, t := range newTypes {
-		supportedTypes = append(supportedTypes, huh.NewOption(t, t))
+
+	featureNames, err := plugin.GetFeaturesUINames(cfg)
+	if err != nil {
+		return nil, err
 	}
-	sort.Slice(supportedTypes, func(i, j int) bool {
-		return supportedTypes[i].String() < supportedTypes[j].String()
-	})
+	if len(featureNames) > 0 {
+		features := make([]huh.Option[string], len(featureNames))
+		for i, f := range featureNames {
+			features[i] = huh.NewOption(f, f)
+		}
+
+		questions = append(questions, huh.NewMultiSelect[string]().
+			Title("Select the features the service will have").
+			Options(features...).
+			Value(&answers.Features),
+		)
+	}
+
+	form := huh.NewForm(huh.NewGroup(questions...)).
+		WithTheme(cfg.GetTheme()).
+		WithAccessible(cfg.UI.Accessible)
+
+	if err := form.Run(); err != nil {
+		return nil, err
+	}
+
+	return answers, nil
+}
+
+func getBaseQuestions(answers *surveyAnswers, cfg *settings.Settings) ([]huh.Field, error) {
+	supportedTypes, err := getSupportedServiceTypes(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	var languages []huh.Option[string]
 	for _, t := range definition.SupportedLanguages() {
 		languages = append(languages, huh.NewOption(t, t))
 	}
 
-	questions := []huh.Field{
+	return []huh.Field{
 		huh.NewInput().
 			Title("Service name. Can be a fully qualified name (URL + name):").
 			Value(&answers.Name).
@@ -85,34 +104,29 @@ func runSurvey(cfg *settings.Settings, protoFilename string) (*surveyAnswers, er
 				huh.NewOption("OnFinish", "OnFinish"),
 			).
 			Value(&answers.Lifecycle),
+	}, nil
+}
+
+func getSupportedServiceTypes(cfg *settings.Settings) ([]huh.Option[string], error) {
+	types := []huh.Option[string]{
+		huh.NewOption(definition.ServiceType_gRPC.String(), definition.ServiceType_gRPC.String()),
+		huh.NewOption(definition.ServiceType_HTTP.String(), definition.ServiceType_HTTP.String()),
+		huh.NewOption(definition.ServiceType_Native.String(), definition.ServiceType_Native.String()),
+		huh.NewOption(definition.ServiceType_Script.String(), definition.ServiceType_Script.String()),
 	}
 
-	featureNames, err := plugin.GetFeaturesUINames(cfg)
+	newTypes, err := plugin.GetNewServiceKinds(cfg)
 	if err != nil {
 		return nil, err
 	}
-	if len(featureNames) > 0 {
-		features := make([]huh.Option[string], len(featureNames))
-		for i, f := range featureNames {
-			features[i] = huh.NewOption(f, f)
-		}
-
-		questions = append(questions, huh.NewMultiSelect[string]().
-			Title("Select the features the service will have").
-			Options(features...).
-			Value(&answers.Features),
-		)
+	for _, t := range newTypes {
+		types = append(types, huh.NewOption(t, t))
 	}
+	sort.Slice(types, func(i, j int) bool {
+		return types[i].String() < types[j].String()
+	})
 
-	form := huh.NewForm(huh.NewGroup(questions...)).
-		WithTheme(cfg.GetTheme()).
-		WithAccessible(cfg.UI.Accessible)
-
-	if err := form.Run(); err != nil {
-		return nil, err
-	}
-
-	return answers, nil
+	return types, nil
 }
 
 // runServiceSurvey executes the survey that a service may have implemented.

@@ -6,6 +6,8 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
+// CreateDefaultSettings creates a default settings file if it does not
+// already exist, initializing it with default values.
 func CreateDefaultSettings() error {
 	if _, ok := settings.FileExists(); ok {
 		fmt.Println("settings file already exists")
@@ -17,9 +19,5 @@ func CreateDefaultSettings() error {
 		return err
 	}
 
-	if err := cfg.Write(); err != nil {
-		return err
-	}
-
-	return nil
+	return cfg.Write()
 }

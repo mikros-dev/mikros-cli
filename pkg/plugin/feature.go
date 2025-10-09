@@ -11,10 +11,10 @@ import (
 	"github.com/mikros-dev/mikros-cli/pkg/survey"
 )
 
-// FeatureApi is the API that a feature plugin must implement to be supported
+// FeatureAPI is the API that a feature plugin must implement to be supported
 // by mikros CLI.
-type FeatureApi interface {
-	// Name must return the feature name that is registered inside the mikros
+type FeatureAPI interface {
+	// Name must return the feature name registered inside the mikros
 	// framework.
 	Name() string
 
@@ -35,12 +35,12 @@ type FeatureApi interface {
 // Feature is the feature plugin object that provides the channel that mikros
 // CLI recognizes as a plugin.
 type Feature struct {
-	api FeatureApi
+	api FeatureAPI
 }
 
 // NewFeature creates a Feature object by receiving an object which must
-// implement the FeatureApi interface.
-func NewFeature(api FeatureApi) (*Feature, error) {
+// implement the FeatureAPI interface.
+func NewFeature(api FeatureAPI) (*Feature, error) {
 	if api == nil {
 		return nil, errors.New("api cannot be nil")
 	}
@@ -89,11 +89,7 @@ func (f *Feature) Run() error {
 		return errors.New("no valid command specified")
 	}
 
-	if err := encoder.Output(); err != nil {
-		return err
-	}
-
-	return nil
+	return encoder.Output()
 }
 
 func inputToMap(in string) (map[string]interface{}, error) {

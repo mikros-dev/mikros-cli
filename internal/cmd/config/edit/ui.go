@@ -38,6 +38,7 @@ loop:
 
 func initialForm(cfg *settings.Settings) (string, error) {
 	var option string
+
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
@@ -84,29 +85,34 @@ func settingsForm(cfg *settings.Settings) error {
 		WithAccessible(cfg.UI.Accessible).
 		WithTheme(cfg.GetTheme())
 
-	if err := form.Run(); err != nil {
-		return err
+	return form.Run()
+}
+
+func getProfileEntries(cfg *settings.Settings, withMainMenu bool) []huh.Option[string] {
+	var entries []huh.Option[string]
+
+	for k := range cfg.Profile {
+		entries = append(entries, huh.NewOption(k, k))
 	}
 
-	return nil
+	if withMainMenu {
+		entries = append(entries, []huh.Option[string]{
+			huh.NewOption("Add new Profile", "add"),
+			huh.NewOption("Remove Profile", "remove"),
+			huh.NewOption("Back", "back"),
+		}...)
+	}
+
+	return entries
 }
 
 func profilesForm(cfg *settings.Settings) error {
 loop:
 	for {
 		var (
-			entries []huh.Option[string]
+			entries = getProfileEntries(cfg, true)
 			choice  string
 		)
-
-		for k := range cfg.Profile {
-			entries = append(entries, huh.NewOption(k, k))
-		}
-		entries = append(entries, []huh.Option[string]{
-			huh.NewOption("Add new Profile", "add"),
-			huh.NewOption("Remove Profile", "remove"),
-			huh.NewOption("Back", "back"),
-		}...)
 
 		form := huh.NewForm(
 			huh.NewGroup(
@@ -128,21 +134,9 @@ loop:
 			break loop
 
 		case "add":
-			name, err := addProfile(cfg)
-			if err != nil {
+			if err := addProfile(cfg); err != nil {
 				return err
 			}
-			_, ok := cfg.Profile[name]
-			if ok {
-				if err := ui.Alert(cfg, fmt.Sprintf("profile '%s' already exists", name)); err != nil {
-					return err
-				}
-			}
-
-			if cfg.Profile == nil {
-				cfg.Profile = make(map[string]settings.Profile)
-			}
-			cfg.Profile[name] = settings.Profile{}
 
 		case "remove":
 			if err := removeProfile(cfg); err != nil {
@@ -160,8 +154,9 @@ loop:
 	return nil
 }
 
-func addProfile(cfg *settings.Settings) (string, error) {
+func addProfile(cfg *settings.Settings) error {
 	var name string
+
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
@@ -174,21 +169,28 @@ func addProfile(cfg *settings.Settings) (string, error) {
 		WithTheme(cfg.GetTheme())
 
 	if err := form.Run(); err != nil {
-		return "", err
+		return err
 	}
 
-	return name, nil
+	if _, ok := cfg.Profile[name]; ok {
+		if err := ui.Alert(cfg, fmt.Sprintf("profile '%s' already exists", name)); err != nil {
+			return err
+		}
+	}
+
+	if cfg.Profile == nil {
+		cfg.Profile = make(map[string]settings.Profile)
+	}
+	cfg.Profile[name] = settings.Profile{}
+
+	return nil
 }
 
 func removeProfile(cfg *settings.Settings) error {
 	var (
 		names   []string
-		entries []huh.Option[string]
+		entries = getProfileEntries(cfg, false)
 	)
-
-	for k := range cfg.Profile {
-		entries = append(entries, huh.NewOption(k, k))
-	}
 
 	form := huh.NewForm(
 		huh.NewGroup(
@@ -264,6 +266,7 @@ func editProfile(cfg *settings.Settings, name string) error {
 
 func confirmSave(cfg *settings.Settings) error {
 	var confirm bool
+
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().

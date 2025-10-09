@@ -7,9 +7,32 @@ import (
 	protofile "github.com/emicklei/proto"
 )
 
+// Proto represents a protobuf file.
 type Proto struct {
 	ServiceName string
 	Methods     []*Method
+}
+
+// Parse parses a protobuf file.
+func Parse(filename string) (*Proto, error) {
+	reader, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer func(reader *os.File) {
+		_ = reader.Close()
+	}(reader)
+
+	parser := protofile.NewParser(reader)
+	definitions, err := parser.Parse()
+	if err != nil {
+		return nil, err
+	}
+
+	p := &Proto{}
+	p.parse(definitions)
+
+	return p, nil
 }
 
 func (p *Proto) parse(definitions *protofile.Proto) {
@@ -30,25 +53,4 @@ func (p *Proto) parsePackage(pkg *protofile.Package) {
 		name = parts[len(parts)-1]
 	}
 	p.ServiceName = name
-}
-
-func Parse(filename string) (*Proto, error) {
-	reader, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer func(reader *os.File) {
-		_ = reader.Close()
-	}(reader)
-
-	parser := protofile.NewParser(reader)
-	definitions, err := parser.Parse()
-	if err != nil {
-		return nil, err
-	}
-
-	p := &Proto{}
-	p.parse(definitions)
-
-	return p, nil
 }
