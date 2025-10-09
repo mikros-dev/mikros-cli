@@ -38,10 +38,10 @@ func (t TemplateContext) IsScriptService() bool {
 	return t.serviceType == definition.ServiceType_Script.String()
 }
 
-// IsNativeService checks if the service type in the TemplateContext is
-// classified as a native service.
-func (t TemplateContext) IsNativeService() bool {
-	return t.serviceType == definition.ServiceType_Native.String()
+// IsWorkerService checks if the service type in the TemplateContext is
+// classified as a worker service.
+func (t TemplateContext) IsWorkerService() bool {
+	return t.serviceType == definition.ServiceType_Worker.String()
 }
 
 // IsGrpcService determines if the service type in the TemplateContext is
@@ -50,10 +50,10 @@ func (t TemplateContext) IsGrpcService() bool {
 	return t.serviceType == definition.ServiceType_gRPC.String()
 }
 
-// IsHTTPService checks if the service type in the TemplateContext is
+// IsHTTPSpecService checks if the service type in the TemplateContext is
 // classified as an HTTP-based service.
-func (t TemplateContext) IsHTTPService() bool {
-	return t.serviceType == definition.ServiceType_HTTP.String()
+func (t TemplateContext) IsHTTPSpecService() bool {
+	return t.serviceType == definition.ServiceType_HTTPSpec.String()
 }
 
 // HasGrpcMethods checks if the TemplateContext contains any defined gRPC

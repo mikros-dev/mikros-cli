@@ -21,7 +21,7 @@ func (s *service) {{.Name}}(ctx context.Context, req *{{$module}}pb.{{.InputName
 }
 {{end}}
 {{- end}}
-{{- if .IsNativeService}}
+{{- if .IsWorkerService}}
 func (s *service) Start(ctx context.Context) error {
 	return nil
 }

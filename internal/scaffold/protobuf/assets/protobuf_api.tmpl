@@ -3,14 +3,14 @@ syntax = "proto3";{{$serviceName := .ServiceName}}{{$protoServiceName := toSnake
 package {{.MainPackageName}}.{{$protoServiceName}};
 
 option go_package = "{{.VCSProjectPrefix}}/{{.RepositoryName}}/gen/go/{{.MainPackageName}}/{{$protoServiceName}};{{$protoServiceName}}";
-{{if .IsHTTPService}}
+{{if .IsHTTPSpecService}}
 import "google/api/annotations.proto";
 import "mikros_extensions.proto";
 import "mikros_openapi.proto";
 {{- else}}
 import "{{.MainPackageName}}/{{$protoServiceName}}/{{$protoServiceName}}.proto";
 {{- end}}
-{{if .IsHTTPService}}
+{{if .IsHTTPSpecService}}
 option (openapi.metadata) = {
   info: {
     title: "{{.ServiceName}}"
@@ -20,7 +20,7 @@ option (openapi.metadata) = {
 {{- end}}
 
 service {{toCamel .ServiceName}}Service {
-{{- if .IsHTTPService}}
+{{- if .IsHTTPSpecService}}
 {{- if .IsAuthenticated}}
  option (mikros.extensions.service_options) = {
     authorization: {
