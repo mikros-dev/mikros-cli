@@ -1,4 +1,4 @@
-package service_repository
+package service
 
 // TemplateContext is a context structure used to process templates with
 // repository-specific data.

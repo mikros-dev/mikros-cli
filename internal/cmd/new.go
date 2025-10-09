@@ -7,10 +7,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mikros-dev/mikros-cli/internal/scaffold/protobuf_module"
-	"github.com/mikros-dev/mikros-cli/internal/scaffold/protobuf_repository"
+	"github.com/mikros-dev/mikros-cli/internal/scaffold/protobuf"
+	protobuf_repository "github.com/mikros-dev/mikros-cli/internal/scaffold/repository/protobuf"
+	service_repository "github.com/mikros-dev/mikros-cli/internal/scaffold/repository/service"
 	"github.com/mikros-dev/mikros-cli/internal/scaffold/service"
-	"github.com/mikros-dev/mikros-cli/internal/scaffold/service_repository"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
@@ -85,11 +85,11 @@ func newServiceRepository(cfg *settings.Settings) {
 }
 
 func newProtobufModule(cfg *settings.Settings) {
-	options := &protobuf_module.NewOptions{
+	options := &protobuf.NewOptions{
 		Profile: viper.GetString("project-profile"),
 	}
 
-	if err := protobuf_module.New(cfg, options); err != nil {
+	if err := protobuf.New(cfg, options); err != nil {
 		fmt.Println("new:", err)
 		return
 	}

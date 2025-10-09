@@ -1,4 +1,4 @@
-package service_repository
+package service
 
 type surveyAnswers struct {
 	RepositoryName string

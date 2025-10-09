@@ -1,4 +1,4 @@
-package protobuf_repository
+package protobuf
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package service_repository
+package service
 
 import (
 	"embed"

@@ -1,4 +1,4 @@
-package protobuf_repository
+package protobuf
 
 import (
 	"github.com/mikros-dev/mikros-cli/internal/settings"

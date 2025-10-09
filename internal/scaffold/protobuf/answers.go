@@ -1,4 +1,4 @@
-package protobuf_module
+package protobuf
 
 // Answers represents the user-provided configuration for generating a protobuf
 // module.

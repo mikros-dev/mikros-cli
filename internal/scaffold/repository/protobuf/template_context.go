@@ -1,4 +1,4 @@
-package protobuf_repository
+package protobuf
 
 // TemplateContext holds contextual information used during template execution.
 type TemplateContext struct {
