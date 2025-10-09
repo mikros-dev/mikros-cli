@@ -7,10 +7,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf_module"
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/protobuf_repository"
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/service"
-	"github.com/mikros-dev/mikros-cli/internal/cmd/new/service_repository"
+	"github.com/mikros-dev/mikros-cli/internal/scaffold/protobuf_module"
+	"github.com/mikros-dev/mikros-cli/internal/scaffold/protobuf_repository"
+	"github.com/mikros-dev/mikros-cli/internal/scaffold/service"
+	"github.com/mikros-dev/mikros-cli/internal/scaffold/service_repository"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 

@@ -8,7 +8,6 @@ import (
 
 	"github.com/iancoleman/strcase"
 
-	"github.com/mikros-dev/mikros-cli/internal/assets/templates/protobuf_module"
 	"github.com/mikros-dev/mikros-cli/internal/git"
 	"github.com/mikros-dev/mikros-cli/internal/path"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
@@ -170,7 +169,7 @@ func generateProtobufFiles(cfg *settings.Settings, basePath string, answers *Ans
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
 		TemplateNames: tplFiles,
-	}, protobuf_module.Files)
+	}, templateFiles)
 	if err != nil {
 		return err
 	}

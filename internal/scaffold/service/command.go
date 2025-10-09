@@ -10,7 +10,6 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/mikros-dev/mikros/components/definition"
 
-	service_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/service"
 	"github.com/mikros-dev/mikros-cli/internal/definitions"
 	"github.com/mikros-dev/mikros-cli/internal/golang"
 	"github.com/mikros-dev/mikros-cli/internal/path"
@@ -315,7 +314,7 @@ func createServiceTemplates(
 	// Execute our templates
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
 		TemplateNames: filenames,
-	}, service_tpl.Files)
+	}, templateFiles)
 	if err != nil {
 		return err
 	}

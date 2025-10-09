@@ -8,9 +8,6 @@ import (
 
 	"github.com/iancoleman/strcase"
 
-	proto_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/protobuf_repository/proto"
-	root_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/protobuf_repository/root"
-	scripts_tpl "github.com/mikros-dev/mikros-cli/internal/assets/templates/protobuf_repository/scripts"
 	"github.com/mikros-dev/mikros-cli/internal/git"
 	"github.com/mikros-dev/mikros-cli/internal/golang"
 	"github.com/mikros-dev/mikros-cli/internal/path"
@@ -140,7 +137,7 @@ func createProjectRootTemplates(tplCtx *TemplateContext) error {
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
 		TemplateNames: templates,
-	}, root_tpl.Files)
+	}, rootTemplateFiles)
 	if err != nil {
 		return err
 	}
@@ -178,7 +175,7 @@ func createProjectScriptsTemplates(repositoryPath string, tplCtx *TemplateContex
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
 		TemplateNames: templates,
-	}, scripts_tpl.Files)
+	}, scriptsTemplateFiles)
 	if err != nil {
 		return err
 	}
@@ -220,7 +217,7 @@ func createProjectProtoTemplates(repositoryPath string, tplCtx *TemplateContext)
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
 		TemplateNames: templates,
-	}, proto_tpl.Files)
+	}, protoTemplateFiles)
 	if err != nil {
 		return err
 	}
