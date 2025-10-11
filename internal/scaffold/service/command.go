@@ -63,14 +63,14 @@ func generateTemplates(options *NewOptions, answers *surveyAnswers, svc *client.
 	if destinationPath == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get current working directory: %w", err)
 		}
 
 		destinationPath = filepath.Join(cwd, strings.ToLower(answers.Name))
 	}
 
 	if _, err := path.CreatePath(destinationPath); err != nil {
-		return err
+		return fmt.Errorf("failed to create service directory: %w", err)
 	}
 
 	// Creates the service.toml file
@@ -81,18 +81,16 @@ func generateTemplates(options *NewOptions, answers *surveyAnswers, svc *client.
 	// Switch to the destination path to create template sources
 	cwd, err := path.ChangeDir(destinationPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to change directory: %w", err)
 	}
 
 	defer func() {
-		if e := os.Chdir(cwd); e != nil {
-			err = e
-		}
+		_ = os.Chdir(cwd)
 	}()
 
 	// creates go.mod
 	if err := golang.ModInit(strcase.ToKebab(answers.Name)); err != nil {
-		return err
+		return fmt.Errorf("failed to create go.mod: %w", err)
 	}
 
 	// creates go source templates
@@ -109,20 +107,20 @@ func writeServiceDefinitions(path string, answers *surveyAnswers) error {
 	}
 
 	if err := definitions.Write(path, defs); err != nil {
-		return err
+		return fmt.Errorf("failed to write service definitions file: %w", err)
 	}
 
 	for name, d := range answers.FeatureDefinitions() {
 		if d.ShouldBeSaved() {
 			if err := definitions.AppendFeature(path, name, d.Definitions()); err != nil {
-				return err
+				return fmt.Errorf("failed to write feature definitions: %w", err)
 			}
 		}
 	}
 
 	if svcDefs := answers.ServiceDefinitions(); svcDefs != nil && svcDefs.ShouldBeSaved() {
 		if err := definitions.AppendService(path, answers.Type, svcDefs.Definitions()); err != nil {
-			return err
+			return fmt.Errorf("failed to write service definitions: %w", err)
 		}
 	}
 
@@ -272,7 +270,7 @@ func externalTemplateInitBlock(answers *surveyAnswers, externalTemplate *mtempla
 
 		block, err := template.ParseBlock(args, nil, data)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to parse external template: %w", err)
 		}
 		initBlock = block
 	}
@@ -313,7 +311,8 @@ func createServiceTemplates(
 ) error {
 	// Execute our templates
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
-		TemplateNames: filenames,
+		TemplatesToUse: filenames,
+		FilesBasePath:  "assets",
 	}, templateFiles)
 	if err != nil {
 		return err
@@ -351,7 +350,7 @@ func createServiceTemplates(
 		}
 
 		session, err := template.NewSessionFromData(&template.LoadOptions{
-			TemplateNames: templateNames,
+			TemplatesToUse: templateNames,
 		}, files)
 		if err != nil {
 			return err

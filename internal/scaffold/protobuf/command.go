@@ -168,7 +168,8 @@ func generateProtobufFiles(cfg *settings.Settings, basePath string, answers *Ans
 	}
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
-		TemplateNames: tplFiles,
+		TemplatesToUse: tplFiles,
+		FilesBasePath:  "assets",
 	}, templateFiles)
 	if err != nil {
 		return err

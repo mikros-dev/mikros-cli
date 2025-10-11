@@ -111,6 +111,7 @@ func getSupportedServiceTypes(cfg *settings.Settings) ([]huh.Option[string], err
 	types := []huh.Option[string]{
 		huh.NewOption(definition.ServiceType_gRPC.String(), definition.ServiceType_gRPC.String()),
 		huh.NewOption(definition.ServiceType_HTTP.String(), definition.ServiceType_HTTP.String()),
+		huh.NewOption(definition.ServiceType_HTTPSpec.String(), definition.ServiceType_HTTPSpec.String()),
 		huh.NewOption(definition.ServiceType_Worker.String(), definition.ServiceType_Worker.String()),
 		huh.NewOption(definition.ServiceType_Script.String(), definition.ServiceType_Script.String()),
 	}
