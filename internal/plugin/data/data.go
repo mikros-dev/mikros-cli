@@ -40,7 +40,7 @@ func DecodePluginData(in string) (*PluginData, error) {
 
 	d.UseNumber()
 	if err := d.Decode(&p); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode plugin data: %w", err)
 	}
 
 	return &p, nil

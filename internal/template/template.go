@@ -50,29 +50,28 @@ type File struct {
 
 // LoadOptions is the template loading options.
 type LoadOptions struct {
-	TemplateNames []File
-	API           map[string]interface{}
+	TemplatesToUse []File
+	API            map[string]interface{}
+	FilesBasePath  string
 }
 
 // NewSessionFromFiles creates a new template session from a set of files.
 func NewSessionFromFiles(options *LoadOptions, files embed.FS) (*Session, error) {
-	dirFiles, err := files.ReadDir(".")
+	dirFiles, err := files.ReadDir(options.FilesBasePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading files: %w", err)
 	}
 
 	var templates []*Info
 	for _, file := range dirFiles {
-		data, err := files.ReadFile(file.Name())
+		data, err := files.ReadFile(filepath.Join(options.FilesBasePath, file.Name()))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("reading file: %w", err)
 		}
 
-		var (
-			name = filenameWithoutExtension(file.Name())
-		)
+		var name = filenameWithoutExtension(file.Name())
 
-		idx := slices.IndexFunc(options.TemplateNames, func(t File) bool {
+		idx := slices.IndexFunc(options.TemplatesToUse, func(t File) bool {
 			return t.Name == name
 		})
 		if idx == -1 {
@@ -86,7 +85,7 @@ func NewSessionFromFiles(options *LoadOptions, files embed.FS) (*Session, error)
 		}
 
 		templates = append(templates, &Info{
-			name:     options.TemplateNames[idx],
+			name:     options.TemplatesToUse[idx],
 			template: tpl,
 		})
 	}
@@ -107,11 +106,9 @@ type Data struct {
 func NewSessionFromData(options *LoadOptions, files []*Data) (*Session, error) {
 	var templates []*Info
 	for _, file := range files {
-		var (
-			name = filenameWithoutExtension(file.FileName)
-		)
+		var name = filenameWithoutExtension(file.FileName)
 
-		idx := slices.IndexFunc(options.TemplateNames, func(t File) bool {
+		idx := slices.IndexFunc(options.TemplatesToUse, func(t File) bool {
 			tplName := t.Name
 			if tplName == "" {
 				tplName = t.Output
@@ -130,7 +127,7 @@ func NewSessionFromData(options *LoadOptions, files []*Data) (*Session, error) {
 		}
 
 		templates = append(templates, &Info{
-			name:     options.TemplateNames[idx],
+			name:     options.TemplatesToUse[idx],
 			template: tpl,
 			context:  file.Context,
 		})
@@ -166,7 +163,7 @@ func loadTemplate(name string, data []byte, options *LoadOptions) (*template.Tem
 func parse(key string, data []byte, helperAPI template.FuncMap) (*template.Template, error) {
 	t, err := template.New(key).Funcs(helperAPI).Parse(string(data))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing template: %w", err)
 	}
 
 	return t, nil

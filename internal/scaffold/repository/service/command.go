@@ -116,7 +116,8 @@ func createProjectRootTemplates(tplCtx *TemplateContext) error {
 	}
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
-		TemplateNames: templates,
+		TemplatesToUse: templates,
+		FilesBasePath:  "assets/root",
 	}, rootFiles)
 	if err != nil {
 		return err
@@ -160,7 +161,8 @@ func createProjectScriptsTemplates(repositoryPath string, tplCtx *TemplateContex
 	}()
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
-		TemplateNames: templates,
+		TemplatesToUse: templates,
+		FilesBasePath:  "assets/scripts",
 	}, scriptFiles)
 	if err != nil {
 		return err

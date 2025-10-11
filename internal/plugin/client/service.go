@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 
@@ -35,7 +36,7 @@ func (s *Service) exec(args ...string) (string, error) {
 		d, err := data.DecodePluginData(out.String())
 		if err != nil {
 			// Nothing to do here, not our error
-			return "", err
+			return "", fmt.Errorf("error running service plugin: %w", err)
 		}
 
 		return "", errors.New(d.Error)
@@ -101,7 +102,7 @@ func (s *Service) ValidateAnswers(answers map[string]interface{}) (map[string]in
 func (s *Service) GetTemplates(answers map[string]interface{}) (*template.Template, error) {
 	b, err := json.Marshal(answers)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error marshaling answers: %w", err)
 	}
 
 	out, err := s.exec("-t", "-i", string(b))

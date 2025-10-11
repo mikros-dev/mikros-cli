@@ -1,6 +1,7 @@
 package protobuf
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -17,7 +18,7 @@ type Proto struct {
 func Parse(filename string) (*Proto, error) {
 	reader, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open %s: %w", filename, err)
 	}
 	defer func(reader *os.File) {
 		_ = reader.Close()
@@ -26,7 +27,7 @@ func Parse(filename string) (*Proto, error) {
 	parser := protofile.NewParser(reader)
 	definitions, err := parser.Parse()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse %s: %w", filename, err)
 	}
 
 	p := &Proto{}

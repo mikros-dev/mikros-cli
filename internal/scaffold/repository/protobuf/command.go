@@ -136,7 +136,8 @@ func createProjectRootTemplates(tplCtx *TemplateContext) error {
 	}
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
-		TemplateNames: templates,
+		TemplatesToUse: templates,
+		FilesBasePath:  "assets/root",
 	}, rootTemplateFiles)
 	if err != nil {
 		return err
@@ -174,7 +175,8 @@ func createProjectScriptsTemplates(repositoryPath string, tplCtx *TemplateContex
 	}()
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
-		TemplateNames: templates,
+		TemplatesToUse: templates,
+		FilesBasePath:  "assets/scripts",
 	}, scriptsTemplateFiles)
 	if err != nil {
 		return err
@@ -200,7 +202,7 @@ func createProjectProtoTemplates(repositoryPath string, tplCtx *TemplateContext)
 		},
 	}
 
-	// Create proto folder and dive into it
+	// Create the proto folder and dive into it
 	scriptsPath := filepath.Join(repositoryPath, "proto", tplCtx.MainPackageName, "example")
 	if _, err := path.CreatePath(scriptsPath); err != nil {
 		return err
@@ -216,7 +218,8 @@ func createProjectProtoTemplates(repositoryPath string, tplCtx *TemplateContext)
 	}()
 
 	session, err := template.NewSessionFromFiles(&template.LoadOptions{
-		TemplateNames: templates,
+		TemplatesToUse: templates,
+		FilesBasePath:  "assets/proto",
 	}, protoTemplateFiles)
 	if err != nil {
 		return err
