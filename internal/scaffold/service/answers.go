@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/creasty/defaults"
 	"github.com/mikros-dev/mikros-cli/internal/protobuf"
+	"github.com/mikros-dev/mikros/components/definition"
 
 	"github.com/mikros-dev/mikros-cli/internal/template"
 )
@@ -15,6 +16,7 @@ type surveyAnswers struct {
 	Product   string
 	Features  []string
 	Lifecycle []string
+	HTTPType  string
 
 	serviceAnswers     map[string]interface{}
 	featureDefinitions map[string]*surveyAnswersDefinitions
@@ -101,6 +103,15 @@ func (s *surveyAnswers) FeatureDefinitions() map[string]*surveyAnswersDefinition
 
 func (s *surveyAnswers) ServiceAnswers() map[string]interface{} {
 	return s.serviceAnswers
+}
+
+func (s *surveyAnswers) ServiceType() string {
+	svcType := s.Type
+	if svcType == definition.ServiceTypeHTTP.String() {
+		svcType = s.HTTPType
+	}
+
+	return svcType
 }
 
 type surveyAnswersDefinitions struct {

@@ -109,11 +109,10 @@ func getBaseQuestions(answers *surveyAnswers, cfg *settings.Settings) ([]huh.Fie
 
 func getSupportedServiceTypes(cfg *settings.Settings) ([]huh.Option[string], error) {
 	types := []huh.Option[string]{
-		huh.NewOption(definition.ServiceType_gRPC.String(), definition.ServiceType_gRPC.String()),
-		huh.NewOption(definition.ServiceType_HTTP.String(), definition.ServiceType_HTTP.String()),
-		huh.NewOption(definition.ServiceType_HTTPSpec.String(), definition.ServiceType_HTTPSpec.String()),
-		huh.NewOption(definition.ServiceType_Worker.String(), definition.ServiceType_Worker.String()),
-		huh.NewOption(definition.ServiceType_Script.String(), definition.ServiceType_Script.String()),
+		huh.NewOption(definition.ServiceTypeGRPC.String(), definition.ServiceTypeGRPC.String()),
+		huh.NewOption(definition.ServiceTypeHTTP.String(), definition.ServiceTypeHTTP.String()),
+		huh.NewOption(definition.ServiceTypeWorker.String(), definition.ServiceTypeWorker.String()),
+		huh.NewOption(definition.ServiceTypeScript.String(), definition.ServiceTypeScript.String()),
 	}
 
 	newTypes, err := plugin.GetNewServiceKinds(cfg)
@@ -130,14 +129,19 @@ func getSupportedServiceTypes(cfg *settings.Settings) ([]huh.Option[string], err
 	return types, nil
 }
 
-// runServiceSurvey executes the survey that a service may have implemented.
-func runServiceSurvey(cfg *settings.Settings, answers *surveyAnswers) (*client.Service, error) {
+// runServiceTypeSurvey executes the survey that a service may have implemented.
+func runServiceTypeSurvey(cfg *settings.Settings, answers *surveyAnswers) (*client.Service, error) {
 	svc, err := plugin.GetServicePlugin(cfg, answers.Type)
 	if err != nil {
 		return nil, err
 	}
 	if svc == nil {
-		// No plugin for the chosen service type.
+		// No plugin for the chosen service type. But do we have specific settings
+		// for the service type?
+		if err := runCoreServiceTypeSurvey(cfg, answers); err != nil {
+			return nil, err
+		}
+
 		return nil, nil
 	}
 
@@ -165,6 +169,30 @@ func runServiceSurvey(cfg *settings.Settings, answers *surveyAnswers) (*client.S
 	return svc, nil
 }
 
+func runCoreServiceTypeSurvey(cfg *settings.Settings, answers *surveyAnswers) error {
+	// We only have specific questions for HTTP services by now
+	if answers.Type != definition.ServiceTypeHTTP.String() {
+		return nil
+	}
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Select the HTTP service type").
+				Options(
+					huh.NewOption("Standard library HTTP", "http"),
+					huh.NewOption("Protobuf spec HTTP", "http-spec"),
+				).
+				Value(&answers.HTTPType),
+		),
+	).
+		WithAccessible(cfg.UI.Accessible).
+		WithTheme(cfg.GetTheme())
+
+	return form.Run()
+}
+
+// runFeatureSurvey executes the survey that a feature may have implemented.
 func runFeatureSurvey(cfg *settings.Settings, name string) (string, interface{}, error) {
 	f, err := plugin.GetFeaturePlugin(cfg, name)
 	if err != nil {

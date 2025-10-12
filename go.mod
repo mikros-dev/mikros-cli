@@ -1,5 +1,7 @@
 module github.com/mikros-dev/mikros-cli
 
+replace github.com/mikros-dev/mikros => ../mikros
+
 go 1.24.2
 
 require (
@@ -10,7 +12,7 @@ require (
 	github.com/creasty/defaults v1.8.0
 	github.com/emicklei/proto v1.14.0
 	github.com/iancoleman/strcase v0.3.0
-	github.com/mikros-dev/mikros v0.19.0
+	github.com/mikros-dev/mikros v0.19.1-0.20251008002452-7847cb75bde6
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 )
@@ -41,6 +43,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.27.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect

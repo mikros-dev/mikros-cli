@@ -7,10 +7,11 @@ import (
 )
 
 type service struct {
-    *mikros.Service
+    Errors errors_api.API `mikros:"feature"`
+    Logger logger_api.API `mikros:"feature"`
 }
 
-{{- if or .IsGrpcService .IsHttpService}}{{$module := toSnake .ServiceName}}
+{{- if or .IsGrpcService .IsHTTPSpecService}}{{$module := toSnake .ServiceName}}
 {{range .GrpcMethods}}
 func (s *service) {{.Name}}(ctx context.Context, req *{{$module}}pb.{{.InputName}}) (*{{$module}}pb.{{.OutputName}}, error) {
     if err := req.Validate(); err != nil {
@@ -37,5 +38,14 @@ func (s *service) Run(ctx context.Context) error {
 
 func (s *service) Cleanup(ctx context.Context) error {
 	return nil
+}
+{{- end}}
+{{- if .IsHTTPService}}
+func (s *service) HTTPHandler(ctx context.Context) (http.Handler, error) {
+    mux := http.NewServeMux()
+
+    // TODO: add routes here
+
+    return mux, nil
 }
 {{- end}}

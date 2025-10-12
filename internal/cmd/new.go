@@ -63,9 +63,9 @@ func newProtobufRepository(cfg *settings.Settings) error {
 	}
 
 	ui.Message(cfg, "New protobuf repository",
-		`✅ Project successfully created `+"\n\n"+
-			`In order to start, execute the following command inside the new project directory:`+
-			"\n\n"+`$ make setup`+"\n")
+		"✅ Project successfully created \n\n"+
+			"In order to start, execute the following command inside the new project directory:"+
+			"\n\n$ make setup")
 
 	return nil
 }
@@ -80,7 +80,7 @@ func newServiceRepository(cfg *settings.Settings) error {
 		return err
 	}
 
-	ui.Message(cfg, "New service repository", "✅ Project successfully created\n")
+	ui.Message(cfg, "New service repository", "✅ Project successfully created")
 	return nil
 }
 
@@ -102,7 +102,7 @@ func newServiceTemplate(cfg *settings.Settings) error {
 		return err
 	}
 
-	ui.Message(cfg, "New service", "✅ Project successfully created\n")
+	ui.Message(cfg, "New service", "✅ Project successfully created")
 	return nil
 }
 

@@ -28,7 +28,7 @@ func Alert(cfg *settings.Settings, text string) error {
 func Message(cfg *settings.Settings, title, text string) {
 	n := huh.NewNote().
 		Title(title).
-		Description(text).
+		Description(text + "\n").
 		WithAccessible(cfg.UI.Accessible).
 		WithTheme(cfg.GetTheme())
 
