@@ -1,12 +1,9 @@
-package data
+package wire
 
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
-	"github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
 // PluginData represents the data that a plugin must return to the CLI.
@@ -14,9 +11,9 @@ type PluginData struct {
 	Name     string                 `json:"name,omitempty"`
 	UIName   string                 `json:"ui_name,omitempty"`
 	Kind     string                 `json:"kind,omitempty"`
-	Survey   *survey.Survey         `json:"survey,omitempty"`
+	Survey   json.RawMessage        `json:"survey,omitempty"`
 	Answers  map[string]interface{} `json:"answers,omitempty"`
-	Template *template.Template     `json:"template,omitempty"`
+	Template json.RawMessage        `json:"template,omitempty"`
 	Error    string                 `json:"error,omitempty"`
 }
 

@@ -8,7 +8,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
+	"github.com/mikros-dev/mikros-cli/internal/plugin/survey"
 )
 
 // FormOptions defines options for configuring a form, including theme settings

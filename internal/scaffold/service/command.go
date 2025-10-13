@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
+	mtemplate "github.com/mikros-dev/mikros-cli/internal/plugin/template"
 	"github.com/mikros-dev/mikros/components/definition"
 
 	"github.com/mikros-dev/mikros-cli/internal/definitions"
@@ -17,7 +18,6 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/protobuf"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 	"github.com/mikros-dev/mikros-cli/internal/template"
-	mtemplate "github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
 // NewOptions holds configuration options for creating a service template.

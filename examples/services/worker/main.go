@@ -4,8 +4,6 @@ import (
 	"github.com/iancoleman/strcase"
 
 	"github.com/mikros-dev/mikros-cli/pkg/plugin"
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
-	mtemplate "github.com/mikros-dev/mikros-cli/pkg/template"
 
 	"worker/assets"
 )
@@ -20,23 +18,23 @@ func (p *Plugin) Kind() string {
 	return "worker"
 }
 
-func (p *Plugin) Survey() *survey.Survey {
-	return &survey.Survey{
-		ConfirmQuestion: &survey.Question{
+func (p *Plugin) Survey() *plugin.Survey {
+	return &plugin.Survey{
+		ConfirmQuestion: &plugin.Question{
 			Message:      "Do you want to add another event?",
 			Default:      "true",
 			ConfirmAfter: true,
 		},
-		Questions: []*survey.Question{
+		Questions: []*plugin.Question{
 			{
 				Name:     "topic_name",
-				Prompt:   survey.PromptInput,
+				Prompt:   plugin.PromptInput,
 				Message:  "Topic name. The subscription topic name to subscribe into:",
 				Required: true,
 			},
 			{
 				Name:     "topic_service_name",
-				Prompt:   survey.PromptInput,
+				Prompt:   plugin.PromptInput,
 				Message:  "The service that emits the event. Enter the service name:",
 				Required: true,
 			},
@@ -51,7 +49,7 @@ func (p *Plugin) ValidateAnswers(_ map[string]interface{}) (map[string]interface
 	}, nil
 }
 
-func (p *Plugin) Template(in map[string]interface{}) *mtemplate.Template {
+func (p *Plugin) Template(in map[string]interface{}) *plugin.Template {
 	files := make(map[string]string)
 	templateFiles, err := assets.Files.ReadDir(".")
 	if err != nil {
@@ -67,7 +65,7 @@ func (p *Plugin) Template(in map[string]interface{}) *mtemplate.Template {
 		files[file.Name()] = string(data)
 	}
 
-	return &mtemplate.Template{
+	return &plugin.Template{
 		NewServiceArgs:          `"worker": &mikros_extensions.WorkerService{},`,
 		WithExternalFeaturesArg: "",
 		WithExternalServicesArg: "",
@@ -75,20 +73,20 @@ func (p *Plugin) Template(in map[string]interface{}) *mtemplate.Template {
 	}
 }
 
-func createTemplateFiles(in map[string]interface{}, files map[string]string) []*mtemplate.File {
+func createTemplateFiles(in map[string]interface{}, files map[string]string) []*plugin.File {
 	data, ok := in["worker"].([]interface{})
 	if !ok {
 		return nil
 	}
 
-	tplFiles := make([]*mtemplate.File, len(data))
+	tplFiles := make([]*plugin.File, len(data))
 	for i, d := range data {
 		entry, ok := d.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		tplFiles[i] = &mtemplate.File{
+		tplFiles[i] = &plugin.File{
 			Content:   files["event.go.tmpl"],
 			Output:    strcase.ToSnake(entry["topic_name"].(string)),
 			Extension: "go",

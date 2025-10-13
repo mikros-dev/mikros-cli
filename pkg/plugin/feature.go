@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/mikros-dev/mikros-cli/internal/plugin"
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
 )
 
 // FeatureAPI is the API that a feature plugin must implement to be supported
@@ -24,7 +23,7 @@ type FeatureAPI interface {
 
 	// Survey should return a survey.Survey object defining which properties
 	// the user must configure to use this feature.
-	Survey() *survey.Survey
+	Survey() *Survey
 
 	// ValidateAnswers receives answers from the feature survey to be validated
 	// inside. It should return the data that should be written into the

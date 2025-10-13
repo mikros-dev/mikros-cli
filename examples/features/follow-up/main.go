@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/mikros-dev/mikros-cli/pkg/plugin"
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
 )
 
 const (
@@ -20,13 +19,13 @@ func (p *Plugin) UIName() string {
 	return uiFeatureName
 }
 
-func (p *Plugin) Survey() *survey.Survey {
-	// We create a survey inside a loop here.
-	return &survey.Survey{
-		Questions: []*survey.Question{
+func (p *Plugin) Survey() *plugin.Survey {
+	// We create the plugin inside the loop here.
+	return &plugin.Survey{
+		Questions: []*plugin.Question{
 			{
 				Name:    "option-chosen",
-				Prompt:  survey.PromptSelect,
+				Prompt:  plugin.PromptSelect,
 				Message: "Select your option:",
 				Options: []string{
 					"option1", "option2", "option3",
@@ -34,19 +33,19 @@ func (p *Plugin) Survey() *survey.Survey {
 				Default: "option2",
 			},
 		},
-		FollowUp: []*survey.FollowUpSurvey{
+		FollowUp: []*plugin.FollowUpSurvey{
 			// Only executed when 'option-chosen' is option3
 			{
 				Name: "name-to-choose",
-				Condition: &survey.QuestionCondition{
+				Condition: &plugin.QuestionCondition{
 					Name:  "option-chosen",
 					Value: "option3",
 				},
-				Survey: &survey.Survey{
-					Questions: []*survey.Question{
+				Survey: &plugin.Survey{
+					Questions: []*plugin.Question{
 						{
 							Name:    "condition1-option3-chosen",
-							Prompt:  survey.PromptInput,
+							Prompt:  plugin.PromptInput,
 							Message: "Enter the name you want:",
 							Default: "my name",
 						},
@@ -56,15 +55,15 @@ func (p *Plugin) Survey() *survey.Survey {
 			// Only executed when 'option-chosen' is option1
 			{
 				Name: "age-to-choose",
-				Condition: &survey.QuestionCondition{
+				Condition: &plugin.QuestionCondition{
 					Name:  "option-chosen",
 					Value: "option1",
 				},
-				Survey: &survey.Survey{
-					Questions: []*survey.Question{
+				Survey: &plugin.Survey{
+					Questions: []*plugin.Question{
 						{
 							Name:    "condition1-option1-chosen",
-							Prompt:  survey.PromptInput,
+							Prompt:  plugin.PromptInput,
 							Message: "Enter your age:",
 							Default: "42",
 						},
@@ -74,15 +73,15 @@ func (p *Plugin) Survey() *survey.Survey {
 			// Only executed when 'option-chosen' is option1 or option3
 			{
 				Name: "address-to-choose",
-				Condition: &survey.QuestionCondition{
+				Condition: &plugin.QuestionCondition{
 					Name:  "option-chosen",
 					Value: []string{"option1", "option3"},
 				},
-				Survey: &survey.Survey{
-					Questions: []*survey.Question{
+				Survey: &plugin.Survey{
+					Questions: []*plugin.Question{
 						{
 							Name:    "condition1-option1-option3-chosen",
-							Prompt:  survey.PromptInput,
+							Prompt:  plugin.PromptInput,
 							Message: "Enter your address:",
 							Default: "Nowhere",
 						},

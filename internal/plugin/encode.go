@@ -1,20 +1,20 @@
 package plugin
 
 import (
-	"github.com/mikros-dev/mikros-cli/internal/plugin/data"
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
-	"github.com/mikros-dev/mikros-cli/pkg/template"
+	"encoding/json"
+
+	"github.com/mikros-dev/mikros-cli/internal/plugin/wire"
 )
 
 // Encoder is the mechanism that a plugin must use to return its data.
 type Encoder struct {
-	*data.PluginData
+	*wire.PluginData
 }
 
 // NewEncoder creates a new Encoder instance.
 func NewEncoder() *Encoder {
 	return &Encoder{
-		PluginData: &data.PluginData{},
+		PluginData: &wire.PluginData{},
 	}
 }
 
@@ -29,8 +29,18 @@ func (e *Encoder) SetUIName(uiName string) {
 }
 
 // SetSurvey sets the plugin survey.
-func (e *Encoder) SetSurvey(s *survey.Survey) {
-	e.Survey = s
+func (e *Encoder) SetSurvey(s interface{}) {
+	if s == nil {
+		return
+	}
+
+	b, err := json.Marshal(s)
+	if err != nil {
+		e.Error = err.Error()
+		return
+	}
+
+	e.PluginData.Survey = b
 }
 
 // SetAnswers sets the answers of the plugin.
@@ -39,8 +49,18 @@ func (e *Encoder) SetAnswers(answers map[string]interface{}) {
 }
 
 // SetTemplate sets the plugin template.
-func (e *Encoder) SetTemplate(template *template.Template) {
-	e.Template = template
+func (e *Encoder) SetTemplate(t interface{}) {
+	if t == nil {
+		return
+	}
+
+	b, err := json.Marshal(t)
+	if err != nil {
+		e.Error = err.Error()
+		return
+	}
+
+	e.PluginData.Template = b
 }
 
 // SetKind sets the plugin kind.

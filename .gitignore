@@ -8,6 +8,12 @@
 ## Unignore all dirs
 !*/
 
+# IDE
 .idea
 *.swp
+
+# OS
+.DS_Store
+
+# Misc
 mikros

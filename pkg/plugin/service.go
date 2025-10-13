@@ -5,8 +5,6 @@ import (
 	"flag"
 
 	"github.com/mikros-dev/mikros-cli/internal/plugin"
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
-	"github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
 // ServiceAPI is the API that a service plugin must implement to be supported
@@ -17,7 +15,7 @@ type ServiceAPI interface {
 
 	// Survey should return a survey.Survey object defining which properties
 	// the user must configure to use this service type.
-	Survey() *survey.Survey
+	Survey() *Survey
 
 	// ValidateAnswers receives answers from the service survey to be validated
 	// inside. It should return the data that should be written into the
@@ -27,7 +25,7 @@ type ServiceAPI interface {
 	// Template allows the plugin to return a set of custom templates that will
 	// be executed when a service is created. It also receives the answers from
 	// the service survey.
-	Template(in map[string]interface{}) *template.Template
+	Template(in map[string]interface{}) *Template
 }
 
 // Service is the service plugin object that provides the channel that mikros
