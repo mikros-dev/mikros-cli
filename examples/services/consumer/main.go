@@ -5,7 +5,7 @@ import (
 
 	"github.com/mikros-dev/mikros-cli/pkg/plugin"
 
-	"worker/assets"
+	"consumer/assets"
 )
 
 type Context struct {
@@ -15,7 +15,7 @@ type Context struct {
 type Plugin struct{}
 
 func (p *Plugin) Kind() string {
-	return "worker"
+	return "consumer"
 }
 
 func (p *Plugin) Survey() *plugin.Survey {
@@ -66,7 +66,7 @@ func (p *Plugin) Template(in map[string]interface{}) *plugin.Template {
 	}
 
 	return &plugin.Template{
-		NewServiceArgs:          `"worker": &mikros_extensions.WorkerService{},`,
+		NewServiceArgs:          `"consumer": &mikros_extensions.WorkerService{},`,
 		WithExternalFeaturesArg: "",
 		WithExternalServicesArg: "",
 		Templates:               createTemplateFiles(in, files),
@@ -74,7 +74,7 @@ func (p *Plugin) Template(in map[string]interface{}) *plugin.Template {
 }
 
 func createTemplateFiles(in map[string]interface{}, files map[string]string) []*plugin.File {
-	data, ok := in["worker"].([]interface{})
+	data, ok := in["consumer"].([]interface{})
 	if !ok {
 		return nil
 	}
@@ -100,12 +100,5 @@ func createTemplateFiles(in map[string]interface{}, files map[string]string) []*
 }
 
 func main() {
-	p, err := plugin.NewService(&Plugin{})
-	if err != nil {
-		plugin.Error(err)
-	}
-
-	if err := p.Run(); err != nil {
-		plugin.Error(err)
-	}
+	plugin.RunService(&Plugin{})
 }

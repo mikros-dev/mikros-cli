@@ -3,6 +3,7 @@ package plugin
 import (
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/mikros-dev/mikros-cli/internal/path"
 	"github.com/mikros-dev/mikros-cli/internal/plugin/client"
@@ -21,17 +22,13 @@ func GetNewServiceKinds(cfg *settings.Settings) ([]string, error) {
 		return nil, nil
 	}
 
-	files, err := os.ReadDir(basePath)
+	files, err := listExecutableFiles(basePath)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, file := range files {
-		if !path.IsExecutable(filepath.Join(basePath, file.Name())) {
-			continue
-		}
-
-		p := client.NewService(basePath, file.Name())
+		p := client.NewService(basePath, file)
 
 		newType, err := p.GetKind()
 		if err != nil {
@@ -55,17 +52,13 @@ func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 		return nil, nil
 	}
 
-	files, err := os.ReadDir(basePath)
+	files, err := listExecutableFiles(basePath)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, file := range files {
-		if !path.IsExecutable(filepath.Join(basePath, file.Name())) {
-			continue
-		}
-
-		p := client.NewFeature(basePath, file.Name())
+		p := client.NewFeature(basePath, file)
 
 		newName, err := p.GetUIName()
 		if err != nil {
@@ -80,22 +73,17 @@ func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 // GetServicePlugin returns the plugin for the given kind.
 func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, error) {
 	var basePath = cfg.Paths.Plugins.Services
-
 	if !path.FindPath(basePath) {
 		return nil, nil
 	}
 
-	files, err := os.ReadDir(basePath)
+	files, err := listExecutableFiles(basePath)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, file := range files {
-		if !path.IsExecutable(filepath.Join(basePath, file.Name())) {
-			continue
-		}
-
-		p := client.NewService(basePath, file.Name())
+		p := client.NewService(basePath, file)
 
 		pluginKind, err := p.GetKind()
 		if err != nil {
@@ -112,22 +100,17 @@ func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, err
 // GetFeaturePlugin returns the plugin for the given name.
 func GetFeaturePlugin(cfg *settings.Settings, name string) (*client.Feature, error) {
 	var basePath = cfg.Paths.Plugins.Features
-
 	if !path.FindPath(basePath) {
 		return nil, nil
 	}
 
-	files, err := os.ReadDir(basePath)
+	files, err := listExecutableFiles(basePath)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, file := range files {
-		if !path.IsExecutable(filepath.Join(basePath, file.Name())) {
-			continue
-		}
-
-		p := client.NewFeature(basePath, file.Name())
+		p := client.NewFeature(basePath, file)
 
 		uiName, err := p.GetUIName()
 		if err != nil {
@@ -139,4 +122,21 @@ func GetFeaturePlugin(cfg *settings.Settings, name string) (*client.Feature, err
 	}
 
 	return nil, nil
+}
+
+func listExecutableFiles(dir string) ([]string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []string
+	for _, entry := range entries {
+		if path.IsExecutable(filepath.Join(dir, entry.Name())) {
+			files = append(files, entry.Name())
+		}
+	}
+
+	sort.Strings(files)
+	return files, nil
 }

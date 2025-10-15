@@ -1,11 +1,8 @@
 package plugin
 
 import (
-	"encoding/json"
 	"errors"
 	"flag"
-	"fmt"
-	"strings"
 
 	"github.com/mikros-dev/mikros-cli/internal/plugin"
 )
@@ -89,17 +86,4 @@ func (f *Feature) Run() error {
 	}
 
 	return encoder.Output()
-}
-
-func inputToMap(in string) (map[string]interface{}, error) {
-	var (
-		out  map[string]interface{}
-		data = strings.ReplaceAll(in, "\\", "")
-	)
-
-	if err := json.Unmarshal([]byte(data), &out); err != nil {
-		return nil, fmt.Errorf("%v: %w", data, err)
-	}
-
-	return out, nil
 }

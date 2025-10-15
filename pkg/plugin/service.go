@@ -65,6 +65,7 @@ func (s *Service) Run() error {
 		if *input == "" {
 			return errors.New("invalid input")
 		}
+
 		in, err := inputToMap(*input)
 		if err != nil {
 			return err
