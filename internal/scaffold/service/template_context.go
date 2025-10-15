@@ -35,25 +35,31 @@ type ImportContext struct {
 // IsScriptService checks if the service type in the TemplateContext is
 // classified as a script-based service.
 func (t TemplateContext) IsScriptService() bool {
-	return t.serviceType == definition.ServiceType_Script.String()
+	return t.serviceType == definition.ServiceTypeScript.String()
 }
 
 // IsWorkerService checks if the service type in the TemplateContext is
 // classified as a worker service.
 func (t TemplateContext) IsWorkerService() bool {
-	return t.serviceType == definition.ServiceType_Worker.String()
+	return t.serviceType == definition.ServiceTypeWorker.String()
 }
 
 // IsGrpcService determines if the service type in the TemplateContext is
 // classified as a gRPC service.
 func (t TemplateContext) IsGrpcService() bool {
-	return t.serviceType == definition.ServiceType_gRPC.String()
+	return t.serviceType == definition.ServiceTypeGRPC.String()
+}
+
+// IsHTTPService checks if the service type in the TemplateContext is
+// classified as an HTTP-based service.
+func (t TemplateContext) IsHTTPService() bool {
+	return t.serviceType == definition.ServiceTypeHTTP.String()
 }
 
 // IsHTTPSpecService checks if the service type in the TemplateContext is
-// classified as an HTTP-based service.
+// classified as an HTTP-based service (http-spec type).
 func (t TemplateContext) IsHTTPSpecService() bool {
-	return t.serviceType == definition.ServiceType_HTTPSpec.String()
+	return t.serviceType == definition.ServiceTypeHTTPSpec.String()
 }
 
 // HasGrpcMethods checks if the TemplateContext contains any defined gRPC

@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/fang"
 	"github.com/charmbracelet/log"
 
-	"github.com/mikros-dev/mikros-cli/internal/cmd"
+	"github.com/mikros-dev/mikros-cli/internal/commands"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
 
@@ -25,7 +25,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := fang.Execute(ctx, cmd.EntryPoint(cfg), options...); err != nil {
+	if err := fang.Execute(ctx, commands.EntryPoint(cfg), options...); err != nil {
 		os.Exit(1)
 	}
 }

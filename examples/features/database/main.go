@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/mikros-dev/mikros-cli/pkg/plugin"
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
 )
 
 const (
@@ -20,31 +19,31 @@ func (p *Plugin) UIName() string {
 	return uiFeatureName
 }
 
-func (p *Plugin) Survey() *survey.Survey {
-	return &survey.Survey{
-		Questions: []*survey.Question{
+func (p *Plugin) Survey() *plugin.Survey {
+	return &plugin.Survey{
+		Questions: []*plugin.Question{
 			{
 				Name:    "database_cache",
 				Message: "Use cache to optimize the queries?",
-				Prompt:  survey.PromptConfirm,
+				Prompt:  plugin.PromptConfirm,
 			},
 			{
 				Name:    "database_kind",
 				Message: "Select the database kind:",
 				Default: "mongo",
 				Options: []string{"mongo", "postgres", "mysql", "sqlserver", "sqlite"},
-				Prompt:  survey.PromptSelect,
+				Prompt:  plugin.PromptSelect,
 			},
 			{
 				Name:    "database_ttl",
 				Message: "Enter the TTL of the entity, if it needs to be cooled:",
 				Default: "0",
-				Prompt:  survey.PromptInput,
+				Prompt:  plugin.PromptInput,
 			},
 			{
 				Name:    "database_collections",
 				Message: "Enter the name of additional collections (one by line):",
-				Prompt:  survey.PromptMultiline,
+				Prompt:  plugin.PromptMultiline,
 			},
 		},
 	}

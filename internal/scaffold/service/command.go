@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
+	mtemplate "github.com/mikros-dev/mikros-cli/internal/plugin/template"
 	"github.com/mikros-dev/mikros/components/definition"
 
 	"github.com/mikros-dev/mikros-cli/internal/definitions"
@@ -17,7 +18,6 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/protobuf"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 	"github.com/mikros-dev/mikros-cli/internal/template"
-	mtemplate "github.com/mikros-dev/mikros-cli/pkg/template"
 )
 
 // NewOptions holds configuration options for creating a service template.
@@ -32,12 +32,14 @@ type NewOptions struct {
 
 // New creates a new service template directory with initial source files.
 func New(cfg *settings.Settings, options *NewOptions) error {
+	// Execute the base survey
 	answers, err := runSurvey(cfg, options.ProtoFilename)
 	if err != nil {
 		return err
 	}
 
-	svc, err := runServiceSurvey(cfg, answers)
+	// Then execute everything specific for the selected service type.
+	svc, err := runServiceTypeSurvey(cfg, answers)
 	if err != nil {
 		return err
 	}
@@ -100,7 +102,7 @@ func generateTemplates(options *NewOptions, answers *surveyAnswers, svc *client.
 func writeServiceDefinitions(path string, answers *surveyAnswers) error {
 	defs := &definition.Definitions{
 		Name:     answers.Name,
-		Types:    []string{answers.Type},
+		Types:    []string{answers.ServiceType()},
 		Version:  answers.Version,
 		Language: answers.Language,
 		Product:  strings.ToUpper(answers.Product),
@@ -161,10 +163,11 @@ func generateTemplateContext(
 
 	externalService := func() bool {
 		switch answers.Type {
-		case definition.ServiceType_gRPC.String(),
-			definition.ServiceType_HTTPSpec.String(),
-			definition.ServiceType_Script.String(),
-			definition.ServiceType_Worker.String():
+		case definition.ServiceTypeGRPC.String(),
+			definition.ServiceTypeHTTP.String(),
+			definition.ServiceTypeHTTPSpec.String(),
+			definition.ServiceTypeScript.String(),
+			definition.ServiceTypeWorker.String():
 			return false
 		}
 
@@ -181,7 +184,7 @@ func generateTemplateContext(
 		servicesExtensions:       externalService(),
 		onStartLifecycle:         slices.Contains(answers.Lifecycle, "OnStart"),
 		onFinishLifecycle:        slices.Contains(answers.Lifecycle, "OnFinish"),
-		serviceType:              answers.Type,
+		serviceType:              answers.ServiceType(),
 		NewServiceArgs:           newServiceArgs,
 		ServiceName:              answers.Name,
 		Imports:                  generateImports(answers),
@@ -210,24 +213,25 @@ func generateNewServiceArgs(answers *surveyAnswers, externalTemplate *mtemplate.
 		svcInitBlock string
 	)
 
-	switch answers.Type {
-	case definition.ServiceType_gRPC.String():
+	switch answers.ServiceType() {
+	case definition.ServiceTypeGRPC.String():
 		svcInitBlock = fmt.Sprintf(`"grpc": &options.GrpcServiceOptions{
 				ProtoServiceDescription: &%spb.%sService_ServiceDesc,
 			},`, svcSnake, strcase.ToCamel(answers.Name))
 
-	case definition.ServiceType_HTTPSpec.String():
-		svcInitBlock = fmt.Sprintf(`"http-spec": &options.HttpSpecServiceOptions{
+	case definition.ServiceTypeHTTPSpec.String():
+		svcInitBlock = fmt.Sprintf(`"http-spec": &options.HTTPSpecServiceOptions{
 				ProtoHttpServer: %spb.NewHttpServer(),
 			},`, svcSnake)
 
-	case definition.ServiceType_Worker.String():
-		svcInitBlock = `"worker": &options.WorkerServiceOptions{},
-`
+	case definition.ServiceTypeHTTP.String():
+		svcInitBlock = `"http": &options.HTTPServiceOptions{},`
 
-	case definition.ServiceType_Script.String():
-		svcInitBlock = `"script": &options.ScriptServiceOptions{},
-`
+	case definition.ServiceTypeWorker.String():
+		svcInitBlock = `"worker": &options.WorkerServiceOptions{},`
+
+	case definition.ServiceTypeScript.String():
+		svcInitBlock = `"script": &options.ScriptServiceOptions{},`
 
 	default:
 		b, err := externalTemplateInitBlock(answers, externalTemplate)
@@ -290,7 +294,12 @@ func generateImports(answers *surveyAnswers) map[string][]ImportContext {
 		},
 		"service": {
 			{
-				Path: "github.com/mikros-dev/mikros",
+				Path:  "github.com/mikros-dev/mikros/apis/features/logger",
+				Alias: "logger_api",
+			},
+			{
+				Path:  "github.com/mikros-dev/mikros/apis/features/errors",
+				Alias: "errors_api",
 			},
 		},
 	}
@@ -299,6 +308,17 @@ func generateImports(answers *surveyAnswers) map[string][]ImportContext {
 		imports["lifecycle"] = append(imports["lifecycle"], ImportContext{
 			Path: "context",
 		})
+	}
+
+	if answers.HTTPType == definition.ServiceTypeHTTP.String() {
+		imports["http"] = append(imports["http"], []ImportContext{
+			{
+				Path: "net/http",
+			},
+			{
+				Path: "context",
+			},
+		}...)
 	}
 
 	return imports

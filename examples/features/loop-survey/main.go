@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/mikros-dev/mikros-cli/pkg/plugin"
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
 )
 
 const (
@@ -20,18 +19,18 @@ func (p *Plugin) UIName() string {
 	return uiFeatureName
 }
 
-func (p *Plugin) Survey() *survey.Survey {
-	// We create a survey inside a loop here.
-	return &survey.Survey{
-		ConfirmQuestion: &survey.Question{
+func (p *Plugin) Survey() *plugin.Survey {
+	// We create a plugin.inside a loop here.
+	return &plugin.Survey{
+		ConfirmQuestion: &plugin.Question{
 			ConfirmAfter: true,
 			Message:      "Do you want to execute the form again?",
 			Default:      "true",
 		},
-		Questions: []*survey.Question{
+		Questions: []*plugin.Question{
 			{
 				Name:    "option-chosen",
-				Prompt:  survey.PromptSelect,
+				Prompt:  plugin.PromptSelect,
 				Message: "Select your option:",
 				Options: []string{
 					"option1", "option2", "option3",

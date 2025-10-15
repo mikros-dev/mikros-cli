@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
+	"github.com/mikros-dev/mikros-cli/internal/plugin/survey"
 )
 
 // SurveyConfirmBefore checks if the survey's confirmation question should be

@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/mikros-dev/mikros-cli/internal/plugin/data"
-	"github.com/mikros-dev/mikros-cli/pkg/survey"
+	"github.com/mikros-dev/mikros-cli/internal/plugin/survey"
+	"github.com/mikros-dev/mikros-cli/internal/plugin/wire"
 )
 
 // Feature represents a feature plugin.
@@ -31,7 +31,7 @@ func (f *Feature) exec(args ...string) (string, error) {
 
 	if err := cmd.Run(); err != nil {
 		// Error here must be decoded from stdout
-		d, err := data.DecodePluginData(out.String())
+		d, err := wire.DecodePluginData(out.String())
 		if err != nil {
 			// Nothing to do here, not our error
 			return "", err
@@ -50,7 +50,7 @@ func (f *Feature) GetName() (string, error) {
 		return "", err
 	}
 
-	d, err := data.DecodePluginData(out)
+	d, err := wire.DecodePluginData(out)
 	if err != nil {
 		return "", err
 	}
@@ -65,7 +65,7 @@ func (f *Feature) GetUIName() (string, error) {
 		return "", err
 	}
 
-	d, err := data.DecodePluginData(out)
+	d, err := wire.DecodePluginData(out)
 	if err != nil {
 		return "", err
 	}
@@ -80,12 +80,20 @@ func (f *Feature) GetSurvey() (*survey.Survey, error) {
 		return nil, err
 	}
 
-	d, err := data.DecodePluginData(out)
+	d, err := wire.DecodePluginData(out)
 	if err != nil {
 		return nil, err
 	}
+	if len(d.Survey) == 0 {
+		return nil, nil
+	}
 
-	return d.Survey, nil
+	var sv survey.Survey
+	if err := json.Unmarshal(d.Survey, &sv); err != nil {
+		return nil, err
+	}
+
+	return &sv, nil
 }
 
 // ValidateAnswers validates the provided answers using the feature plugin.
@@ -100,7 +108,7 @@ func (f *Feature) ValidateAnswers(answers map[string]interface{}) (map[string]in
 		return nil, err
 	}
 
-	d, err := data.DecodePluginData(out)
+	d, err := wire.DecodePluginData(out)
 	if err != nil {
 		return nil, err
 	}
