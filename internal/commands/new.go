@@ -13,7 +13,7 @@ import (
 	"github.com/mikros-dev/mikros-cli/internal/ui"
 )
 
-func cmd(cfg *settings.Settings) *cobra.Command {
+func newCmd(cfg *settings.Settings) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new",
 		Short: "Create a new mikros project",

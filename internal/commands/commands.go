@@ -13,7 +13,8 @@ func EntryPoint(cfg *settings.Settings) *cobra.Command {
 
 	// Configure commands
 	root.AddCommand(configCmd())
-	root.AddCommand(cmd(cfg))
+	root.AddCommand(newCmd(cfg))
+	root.AddCommand(lintCmd())
 
 	return root
 }
