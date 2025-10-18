@@ -8,8 +8,8 @@ import (
 
 	"github.com/iancoleman/strcase"
 
+	"github.com/mikros-dev/mikros-cli/internal/fs"
 	"github.com/mikros-dev/mikros-cli/internal/git"
-	"github.com/mikros-dev/mikros-cli/internal/path"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 	"github.com/mikros-dev/mikros-cli/internal/template"
 )
@@ -65,12 +65,12 @@ func generateTemplates(cfg *settings.Settings, answers *Answers, options *NewOpt
 		return err
 	}
 
-	if _, err := path.CreatePath(templateBasePath); err != nil {
+	if _, err := fs.CreatePath(templateBasePath); err != nil {
 		return err
 	}
 
 	// Switch to the destination path to create template sources
-	cwd, err := path.ChangeDir(templateBasePath)
+	cwd, err := fs.ChangeDir(templateBasePath)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func getTemplatesBasePath(serviceName string) (string, error) {
 
 	// Is there any proto/ folder from where we are now? If so, use the same
 	// approach.
-	if path.FindPath(filepath.Join(cwd, "proto")) {
+	if fs.FindPath(filepath.Join(cwd, "proto")) {
 		files, err := os.ReadDir(filepath.Join(cwd, "proto"))
 		if err != nil {
 			return cwd, nil

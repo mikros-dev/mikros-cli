@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/go-playground/validator/v10"
 
-	"github.com/mikros-dev/mikros-cli/internal/path"
+	"github.com/mikros-dev/mikros-cli/internal/fs"
 	"github.com/mikros-dev/mikros-cli/internal/process"
 )
 
@@ -47,7 +47,7 @@ func Run(ctx context.Context, opts Options) error {
 }
 
 func locateDependencies() error {
-	if _, err := path.FindBinary("revive"); err != nil {
+	if _, err := fs.FindBinary("revive"); err != nil {
 		return err
 	}
 
@@ -55,7 +55,7 @@ func locateDependencies() error {
 }
 
 func executeLint(ctx context.Context, opts Options) error {
-	tool, err := path.FindBinary("revive")
+	tool, err := fs.FindBinary("revive")
 	if err != nil {
 		return err
 	}

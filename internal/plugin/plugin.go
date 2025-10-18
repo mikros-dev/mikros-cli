@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/mikros-dev/mikros-cli/internal/path"
+	"github.com/mikros-dev/mikros-cli/internal/fs"
 	"github.com/mikros-dev/mikros-cli/internal/plugin/client"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 )
@@ -18,7 +18,7 @@ func GetNewServiceKinds(cfg *settings.Settings) ([]string, error) {
 		types    []string
 	)
 
-	if !path.FindPath(basePath) {
+	if !fs.FindPath(basePath) {
 		return nil, nil
 	}
 
@@ -48,7 +48,7 @@ func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 		names    []string
 	)
 
-	if !path.FindPath(basePath) {
+	if !fs.FindPath(basePath) {
 		return nil, nil
 	}
 
@@ -73,7 +73,7 @@ func GetFeaturesUINames(cfg *settings.Settings) ([]string, error) {
 // GetServicePlugin returns the plugin for the given kind.
 func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, error) {
 	var basePath = cfg.Paths.Plugins.Services
-	if !path.FindPath(basePath) {
+	if !fs.FindPath(basePath) {
 		return nil, nil
 	}
 
@@ -100,7 +100,7 @@ func GetServicePlugin(cfg *settings.Settings, kind string) (*client.Service, err
 // GetFeaturePlugin returns the plugin for the given name.
 func GetFeaturePlugin(cfg *settings.Settings, name string) (*client.Feature, error) {
 	var basePath = cfg.Paths.Plugins.Features
-	if !path.FindPath(basePath) {
+	if !fs.FindPath(basePath) {
 		return nil, nil
 	}
 
@@ -132,7 +132,7 @@ func listExecutableFiles(dir string) ([]string, error) {
 
 	var files []string
 	for _, entry := range entries {
-		if path.IsExecutable(filepath.Join(dir, entry.Name())) {
+		if fs.IsExecutable(filepath.Join(dir, entry.Name())) {
 			files = append(files, entry.Name())
 		}
 	}

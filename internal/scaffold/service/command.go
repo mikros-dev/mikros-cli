@@ -12,8 +12,8 @@ import (
 	"github.com/mikros-dev/mikros/components/definition"
 
 	"github.com/mikros-dev/mikros-cli/internal/definitions"
+	"github.com/mikros-dev/mikros-cli/internal/fs"
 	"github.com/mikros-dev/mikros-cli/internal/golang"
-	"github.com/mikros-dev/mikros-cli/internal/path"
 	"github.com/mikros-dev/mikros-cli/internal/plugin/client"
 	"github.com/mikros-dev/mikros-cli/internal/protobuf"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
@@ -71,7 +71,7 @@ func generateTemplates(options *NewOptions, answers *surveyAnswers, svc *client.
 		destinationPath = filepath.Join(cwd, strings.ToLower(answers.Name))
 	}
 
-	if _, err := path.CreatePath(destinationPath); err != nil {
+	if _, err := fs.CreatePath(destinationPath); err != nil {
 		return fmt.Errorf("failed to create service directory: %w", err)
 	}
 
@@ -81,7 +81,7 @@ func generateTemplates(options *NewOptions, answers *surveyAnswers, svc *client.
 	}
 
 	// Switch to the destination path to create template sources
-	cwd, err := path.ChangeDir(destinationPath)
+	cwd, err := fs.ChangeDir(destinationPath)
 	if err != nil {
 		return fmt.Errorf("failed to change directory: %w", err)
 	}

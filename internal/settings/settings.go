@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/creasty/defaults"
 
-	"github.com/mikros-dev/mikros-cli/internal/path"
+	"github.com/mikros-dev/mikros-cli/internal/fs"
 )
 
 const (
@@ -114,7 +114,7 @@ func NewDefault() (*Settings, error) {
 // FileExists checks if the settings file exists and returns its expanded path.
 func FileExists() (string, bool) {
 	name := os.ExpandEnv(settingsFilename)
-	return name, path.FindPath(name)
+	return name, fs.FindPath(name)
 }
 
 // Write saves the current Settings instance to a file at the predefined location
@@ -122,7 +122,7 @@ func FileExists() (string, bool) {
 func (s *Settings) Write() error {
 	var basePath = os.ExpandEnv(settingsFilename)
 
-	if _, err := path.CreatePath(filepath.Dir(basePath)); err != nil {
+	if _, err := fs.CreatePath(filepath.Dir(basePath)); err != nil {
 		return err
 	}
 

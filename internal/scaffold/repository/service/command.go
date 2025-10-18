@@ -7,8 +7,8 @@ import (
 
 	"github.com/iancoleman/strcase"
 
+	"github.com/mikros-dev/mikros-cli/internal/fs"
 	"github.com/mikros-dev/mikros-cli/internal/git"
-	"github.com/mikros-dev/mikros-cli/internal/path"
 	"github.com/mikros-dev/mikros-cli/internal/settings"
 	"github.com/mikros-dev/mikros-cli/internal/template"
 )
@@ -37,7 +37,7 @@ func generateProject(options *NewOptions, answers *surveyAnswers) error {
 	}
 
 	// Switch to the destination path so we can work inside
-	cwd, err := path.ChangeDir(repositoryPath)
+	cwd, err := fs.ChangeDir(repositoryPath)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func createProjectDirectory(options *NewOptions, repositoryName string) (string,
 		return "", err
 	}
 
-	if _, err := path.CreatePath(p); err != nil {
+	if _, err := fs.CreatePath(p); err != nil {
 		return "", err
 	}
 
@@ -147,10 +147,10 @@ func createProjectScriptsTemplates(repositoryPath string, tplCtx *TemplateContex
 
 	// Create .scripts folder and dive into it
 	scriptsPath := filepath.Join(repositoryPath, ".scripts")
-	if _, err := path.CreatePath(scriptsPath); err != nil {
+	if _, err := fs.CreatePath(scriptsPath); err != nil {
 		return err
 	}
-	cwd, err := path.ChangeDir(scriptsPath)
+	cwd, err := fs.ChangeDir(scriptsPath)
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func createProjectScriptsTemplates(repositoryPath string, tplCtx *TemplateContex
 	}
 
 	for _, file := range templates {
-		if err := path.SetExecutablePath(filepath.Join(scriptsPath, file.Name)); err != nil {
+		if err := fs.SetExecutablePath(filepath.Join(scriptsPath, file.Name)); err != nil {
 			return err
 		}
 	}

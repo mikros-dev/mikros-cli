@@ -1,4 +1,4 @@
-package path
+package fs
 
 import (
 	"os"
