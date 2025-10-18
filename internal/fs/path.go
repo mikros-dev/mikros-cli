@@ -1,7 +1,8 @@
-package path
+package fs
 
 import (
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 )
@@ -82,4 +83,10 @@ func IsExecutable(path string) bool {
 // SetExecutablePath sets the path as executable.
 func SetExecutablePath(path string) error {
 	return os.Chmod(path, os.ModePerm)
+}
+
+// FindBinary searches for an executable named by the given string in the
+// system's PATH and returns its absolute path.
+func FindBinary(name string) (string, error) {
+	return exec.LookPath(name)
 }

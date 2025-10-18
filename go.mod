@@ -9,8 +9,10 @@ require (
 	github.com/charmbracelet/fang v0.4.3
 	github.com/charmbracelet/huh v0.6.0
 	github.com/charmbracelet/log v0.4.2
+	github.com/creack/pty v1.1.24
 	github.com/creasty/defaults v1.8.0
 	github.com/emicklei/proto v1.14.0
+	github.com/go-playground/validator/v10 v10.27.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/mikros-dev/mikros v0.19.1-0.20251008002452-7847cb75bde6
 	github.com/spf13/cobra v1.9.1
@@ -41,7 +43,6 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.27.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
