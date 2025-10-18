@@ -4,7 +4,6 @@ confidence = 0.8
 errorCode  = 42
 warningCode = 42
 
-# ---------- Formatação / imports ----------
 [rule.blank-imports]
 severity = "error"
 
@@ -14,44 +13,37 @@ severity = "error"
 [rule.duplicated-imports]
 severity = "warning"
 
-# Limite de colunas (linha)
 [rule.line-length-limit]
 severity  = "warning"
 arguments = [{{.LineLength}}]
 
-# ---------- Comentários ----------
 [rule.exported]
-severity = "error"   # exige godoc em itens exportados
+severity = "error"
 
 [rule.package-comments]
 severity = "warning"
-Disabled = true # Deve ser false para packages
+Disabled = true
 
 [rule.comment-spacings]
 severity = "warning"
 
-# ---------- Funções: tamanho, complexidade, resultado ----------
 # function-length: [máx. statements, máx. linhas]
 [rule.function-length]
 severity  = "warning"
 arguments = [{{.FunctionStatements}}, {{.FunctionLines}}] # ~{{.FunctionStatements}} statements, ~{{.FunctionLines}} linhas
 
-# Complexidade ciclomática (teste/ramificações)
 [rule.cyclomatic]
 severity  = "warning"
 arguments = [{{.Cyclomatic}}]
 
-# Complexidade cognitiva (facilidade de entender)
 [rule.cognitive-complexity]
 severity  = "warning"
 arguments = [{{.Complexity}}]
 
-# Número de resultados por função (evita APIs difíceis de usar)
 [rule.function-result-limit]
 severity  = "warning"
 arguments = [3]
 
-# ---------- Controle de fluxo (evitar else/aninhamento) ----------
 # Prefere early return; evita else desnecessário
 [rule.if-return]
 severity = "warning"
@@ -59,12 +51,10 @@ severity = "warning"
 [rule.indent-error-flow]
 severity = "warning"
 
-# Aninhamento máximo de estruturas de controle
 [rule.max-control-nesting]
 severity  = "warning"
 arguments = [{{.MaxNestingLevel}}]
 
-# ---------- Nomes / receptores ----------
 [rule.var-naming]
 severity = "warning"
 
@@ -74,7 +64,6 @@ severity = "warning"
 [rule.confusing-naming]
 severity = "warning"
 
-# ---------- Erros / boas práticas ----------
 [rule.error-strings]
 severity = "warning"
 
