@@ -17,8 +17,7 @@ func lintCmd() *cobra.Command {
 Use it to validate style and potential issues before a commit.
 
 It is idempotent and does not modify files by default. Use flags
-to customize paths, format, and config, or to show more details
-about the agreements.
+to customize paths and format.
 
 Examples:
  # Run lint in the current directory
