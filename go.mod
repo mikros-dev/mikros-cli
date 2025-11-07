@@ -1,7 +1,5 @@
 module github.com/mikros-dev/mikros-cli
 
-replace github.com/mikros-dev/mikros => ../mikros
-
 go 1.24.2
 
 require (
